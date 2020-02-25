@@ -1,2 +1,2 @@
 language: java
-
+script: ./travis_hello_test/mvn package 
