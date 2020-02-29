@@ -4,11 +4,11 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.opensauce.test</groupId>
-  <artifactId>travis_hello_test</artifactId>
+  <groupId>openSauce.pro</groupId>
+  <artifactId>android_marker</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>travis_hello_test</name>
+  <name>android_marker</name>
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 
@@ -18,7 +18,6 @@
     <maven.compiler.target>1.7</maven.compiler.target>
   </properties>
 
-  <!-- adding junit 4 for testing-->
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -69,39 +68,7 @@
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.0.0</version>
-  	</plugin>
-	<!-- adding coveralls-maven-plugin -->
-	<plugin>
-		<groupId>org.eluder.coveralls</groupId>
-		<artifactId>coveralls-maven-plugin</artifactId>
-		<version>4.3.0</version>
-	</plugin>
-	<!-- adding jacoco for compatibility with java8-->
-	<plugin>
-		<groupId>org.jacoco</groupId>
-		<artifactId>jacoco-maven-plugin</artifactId>
-		<version>0.8.5</version>
-		<executions>
-			<execution>
-				<id>default-prepare-agent</id>
-				<goals>
-					<goal>prepare-agent</goal>
-				</goals>
-			</execution>
-			<execution>
-				<id>default-report</id>
-				<goals>
-					<goal>report</goal>
-				</goals>
-			</execution>
-			<execution>
-				<id>default-goal</id>
-				<goals>
-					<goal>check</goal>
-				</goals>
-			</execution>
-		</executions>
-	</plugin>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>

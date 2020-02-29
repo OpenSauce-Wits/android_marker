@@ -1,4 +1,4 @@
-package com.opensauce.test;
+package openSauce.pro;
 
 import static org.junit.Assert.assertTrue;
 

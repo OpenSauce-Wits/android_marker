@@ -1,4 +1,4 @@
-package com.opensauce.test;
+package openSauce.pro;
 
 /**
  * Hello world!
