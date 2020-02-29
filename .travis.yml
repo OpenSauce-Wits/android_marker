@@ -1,6 +1,4 @@
 language: java
 script:
         - cd travis_hello_test
-        - mvn package
-after_success:
-        - mvn clean package jacoco:report coveralls:report
+        - mvn test
