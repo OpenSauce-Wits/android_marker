@@ -68,7 +68,18 @@
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.0.0</version>
-        </plugin>
+  	</plugin>
+	<plugin>
+		<groupId>org.codehaus.mojo</groupId>
+		<artifactId>cobertura-maven-plugin</artifactId>
+		<version>2.7</version>
+		<configuration>
+			<format>xml</format>
+			<maxmem>256m</maxmem>
+			<!-- aggregrated reports for multi-module projects-->
+			<aggregate>true</aggregate>
+		</configuration>
+  	</plugin>
       </plugins>
     </pluginManagement>
   </build>
