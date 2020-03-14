@@ -176,3 +176,5 @@ public class MainActivity extends Activity
 </android.support.constraint.ConstraintLayout>
 
 >> app/src/main/res/layout/activity_main.xml
+
+TODO - checkout monkey command on adb
