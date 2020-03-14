@@ -1,6 +1,8 @@
 -download gradle
 https://downloads.gradle-dn.com/distributions/gradle-6.2.2-bin.zip
 
+- system should have openjdk-8-jdk openjdk-8-jdk-headless
+
 ##Gradle Android Project
 
 include ':app' >> settings.gradle
