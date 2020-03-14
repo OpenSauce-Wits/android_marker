@@ -1,0 +1,110 @@
+https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip
+https://downloads.gradle-dn.com/distributions/gradle-6.2.2-bin.zip
+
+Gradle Android Project
+
+include ':app' >> settings.gradle
+
+- define where to download our gradle libraries from
+
+buildscript {
+
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:<Plugin-version(3.6.0 latest as of 13/03/20 )>'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete '<project-name/build>'
+}
+
+>> build.gradle
+
+-use android gradle plugin
+
+mkdir app
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    defaultConfig {
+        applicationId "com.example.karl.myapplication"
+        minSdkVersion 16
+        targetSdkVersion 25
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'com.android.support:appcompat-v7:25.3.1'
+}
+
+
+>> app/build.gradle
+
+-create app/src/main/res/values/styles.xml which will be used to setup app's main theme
+
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+    </style>
+
+</resources>
+
+>> app/src/main/res/values/styles.xml
+
+- create app/src/main/AndroidManifest.xml to define package, label and main activity of the app.
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="<java.project.package.name>">
+
+    <application
+        android:label="Demo App"
+        android:theme="@style/AppTheme">
+
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+
+>> app/src/main/AndroidManifest.xml
+
+-use this for sdk tools
+
+https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+
+- at some point gradle would refuse to change build files like Android Manifest : CUASE - file system had been corrupted.
+
+#NB dashed names are not valid java class or package names
+
+TODO run generated apk on android device
+Research difference between apk variants
+
+my current server IP 192.168.26.128
