@@ -132,8 +132,9 @@ my current server IP 192.168.26.128
 - adb uninstall <package.name.of.app> - uninstalls the apk and returns 'Success'
 - adb shell pm list packages -lists all installed packages/android apps
 
-Installing debug variant of app with gradle
+Installing/Uninstalling debug variant of app with gradle
 - ./gradlew installDebug
+- ./gradlew uninstallDebug
 
 - debug version of app installs but the release version needs signing.
 
