@@ -103,21 +103,8 @@ dependencies {
 
 https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
 
-- add this to profile and source profile for env setup 
+- add this to bashrc and source profile for env setup
 
-#android home
-export ANDROID_HOME=/home/tizzar/AndroidCLI/android-sdk-linux
-export PATH=$ANDROID_HOME/tools:$PATH
-export PATH=$ANDROID_HOME/tools/bin:$PATH
-export PATH=$ANDROID_HOME/platform-tools:$PATH
-
-#android sdk root
-export ANDROID_SDK_ROOT=$ANDROID_HOME
-export PATH=$ANDROID_SDK_ROOT:$PATH
-
-#gradle
-export GRADLE_HOME=/home/tizzar/AndroidCLI/gradle/gradle-6.2.2
-export PATH=$GRADDLE_HOME/bin:$PATH
 - build using ./gradlew in android_project root directory
 app/build/outputs/**  ##here lay the generated apk
 
@@ -181,3 +168,26 @@ public class MainActivity extends Activity
 >> app/src/main/res/layout/activity_main.xml
 
 TODO - checkout monkey command on adb
+
+
+AVD Creation
+
+- sdkmanager --install "system-images;android-28;google_apis;x86_64" to install the system image for the emulator
+- avdmanager create avd -n <NameOfAVD> -k <directory;to;system;image>
+
+#android
+export ANDROID_HOME=/home/tizzar/AndroidCLI/android-sdk-linux
+export PATH=$ANDROID_HOME/tools:$PATH
+export PATH=$ANDROID_HOME/tools/bin:$PATH
+export PATH=$ANDROID_HOME/platform-tools:$PATH
+
+#android sdk root
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+export PATH=$ANDROID_SDK_ROOT:$PATH
+
+#gradle
+export GRADLE_HOME=/home/tizzar/AndroidCLI/gradle/gradle-6.2.2
+export PATH=$GRADDLE_HOME/bin:$PATH
+
+#virtual device/emulator
+export ANDROID_AVD_HOME=/root/.android/avd
