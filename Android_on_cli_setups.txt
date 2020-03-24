@@ -191,3 +191,10 @@ export PATH=$GRADDLE_HOME/bin:$PATH
 
 #virtual device/emulator
 export ANDROID_AVD_HOME=/root/.android/avd
+
+- load emulator
+ emulator @<emulatorName> -no-window -no-audio #resolve no qt library error by launching this command in ANDROID_HOME/tools
+
+- error:device offline
+ adb kill-server
+ adb start-server #kills bridge without having to restart emulator
