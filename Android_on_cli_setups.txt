@@ -198,3 +198,8 @@ export ANDROID_AVD_HOME=/root/.android/avd
 - error:device offline
  adb kill-server
  adb start-server #kills bridge without having to restart emulator
+
+#To show full stacktrace when tests fail
+>> tasks.withType( Test) {
+	exceptionFormat = 'full'
+}
