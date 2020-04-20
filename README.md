@@ -31,6 +31,7 @@ The Program assumes that A has already submitted his logic
 
 ## Run the program
 > The argument is the name of the project
+
 `./compile.sh Calculator`
 
 ## Contents
