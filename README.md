@@ -8,6 +8,12 @@ A moodle extension/plugin for marking student's android apps.
 # Goal
 > Compile and Install Android Code 
 
+# Requirements for development
+1. Android logic code that solves test cases
+ * Copy src folder
+2. Android Testing
+ * ProjectB - Name the entire project folder "ProjectB"
+ 
 
 # Assumptions
 1. Moodle server that collects files
@@ -24,6 +30,7 @@ The Program assumes that A has already submitted his logic
 
 
 ## Run the program
+> The argument is the name of the project
 `./compile.sh Calculator`
 
 ## Contents
@@ -44,6 +51,7 @@ The Program assumes that A has already submitted his logic
 ## Notes
 This is the first version. Future releases will emcompass more tests and regulations.
 Criticism and critical analysis of shortfalls is critical to the development of the program.
+It is also imperative to upload android code in the manner demonstrated in this example
 
 
 
