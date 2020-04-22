@@ -1,4 +1,5 @@
-# android_marker
+# android_marker 
+<a href="https://travis-ci.com/github/OpenSauce-Wits/android_marker/builds/161445112"><img src="https://travis-ci.com/OpenSauce-Wits/android_marker.svg?branch=master"></a>
 A moodle extension/plugin for marking student's android apps.
 
 # Android Compiler Version 1.0
