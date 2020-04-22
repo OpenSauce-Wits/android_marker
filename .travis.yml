@@ -1,3 +1,21 @@
-language: java
-after_success:
-        - mvn clean cobertura:cobertura coveralls:report 
+language: android
+sudo: required
+jdk: oraclejdk8
+
+android:
+  components:
+    - tools
+    - platform-tools
+    - tools
+    - build-tools-29.0.3
+    - android-29
+
+notifications:
+  email: true
+
+before_script:
+  - cd ProjectB/Calculator
+
+script:
+  - ./gradlew clean build
+  - ./gradlew test
