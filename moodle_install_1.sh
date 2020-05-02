@@ -36,4 +36,5 @@ cp -R /opt/moodle /var/www/html/
 mkdir /var/moodledata
 chown -R www-data /var/moodledata
 chmod -R 777 /var/moodledata
-chmod -R 0755 /var/www/html/moodle
+#*after installation
+#chmod -R 0755 /var/www/html/moodle
