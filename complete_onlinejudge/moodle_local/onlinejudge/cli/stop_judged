@@ -1,0 +1,11 @@
+#!/bin/sh
+
+PIDID=`pgrep -f "judged.php"`
+
+#stop judge
+if ! [ -z ${PIDID} ]; then
+    echo "judged.php is running (pid $PIDID).\nStopping judge..."
+    kill ${PIDID}
+else
+    echo "judged.php is not running."
+fi
