@@ -79,18 +79,16 @@ class judge_opensauce extends judge_base {
         $input = $task->input;
         $output = $task->output;
 
-        // Get source code
+	// Get source code
         $fs = get_file_storage();
-        $files = $fs->get_area_files(get_context_instance(CONTEXT_SYSTEM)->id, 'local_onlinejudge', 'tasks', $task->id, 'sortorder, timemodified', false);
-        $source = '';
-        foreach ($files as $file) {
-            $source = $file->get_content();
-            break;
-        }
-
-        $source = base64_encode($source);
-
-        // Begin soap
+        $files = $fs->get_area_files(context_system::instance()->id, 'local_onlinejudge', 'tasks', $task->id, 'sortorder, timemodified', false);
+	$source = "";
+	//get each source file's hash value
+	foreach ( $files as $file)
+	{
+		$source = $file->get_contenthash() ;
+	}
+	// Begin soap
         /**
          * function createSubmission create a paste.
          * @param user is the user name.
@@ -110,11 +108,12 @@ class judge_opensauce extends judge_base {
          *     )
          */
         $data = array("language" => "$language",
-            "source" => "$source",
-            "input" => "$input",
-            "output" => "$output",
-            "timelimit" => "$task->cpulimit");
-        $data_string = json_encode($data);
+		"source" => $source,
+		"input" => "$input",
+		"output" => "$output",
+		"timelimit" => "$task->cpulimit");
+	$data_string = json_encode($data);
+
         $options = array(
             'http' => array(
                 'method' => 'POST',
@@ -127,7 +126,7 @@ class judge_opensauce extends judge_base {
         $context = stream_context_create($options);
         $result = file_get_contents($url, false, $context);
         $response = json_decode($result);
-        $task->status = $response->result;
+	$task->status = $response->result;
         $task->infostudent = $response->stderr;
         $task->infoteacher = $response->stdout;
 

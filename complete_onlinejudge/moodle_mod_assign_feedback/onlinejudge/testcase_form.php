@@ -72,8 +72,8 @@ class testcase_form extends moodleform {
         $repeatarray[] = $mform->createElement('checkbox', 'usefile', get_string('usefile', 'assignfeedback_onlinejudge'));
         $repeatarray[] = $mform->createElement('textarea', 'input', get_string('input', 'assignfeedback_onlinejudge'), 'wrap="virtual" rows="5" cols="50"');
         $repeatarray[] = $mform->createElement('textarea', 'output', get_string('output', 'assignfeedback_onlinejudge'), 'wrap="virtual" rows="5" cols="50"');
-        $repeatarray[] = $mform->createElement('filemanager', 'inputfile', get_string('inputfile', 'assignfeedback_onlinejudge'), null, array('subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => array('plaintext')));
-        $repeatarray[] = $mform->createElement('filemanager', 'outputfile', get_string('outputfile', 'assignfeedback_onlinejudge'), null, array('subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => array('plaintext')));
+        $repeatarray[] = $mform->createElement('filemanager', 'inputfile', get_string('inputfile', 'assignfeedback_onlinejudge'), null, array('subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => array('json')));
+        $repeatarray[] = $mform->createElement('filemanager', 'outputfile', get_string('outputfile', 'assignfeedback_onlinejudge'), null, array('subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => array('zip')));
         $repeatarray[] = $mform->createElement('text', 'feedback', get_string('feedback', 'assignfeedback_onlinejudge'), array('size' => 50));
         $repeatarray[] = $mform->createElement('hidden', 'caseid', -1);
 

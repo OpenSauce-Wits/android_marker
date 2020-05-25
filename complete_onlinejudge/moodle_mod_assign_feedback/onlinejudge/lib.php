@@ -285,12 +285,16 @@ function get_testcases($assign_id) {
             $fs = get_file_storage();
 
             if ($files = $fs->get_area_files($context->id, 'mod_assign', 'onlinejudge_input', $record->id)) {
-                $file = array_pop($files);
-                $record->input = $file->get_content();
+		$file = array_pop($files);
+		//THABO R changing here so we store the file sha1sum instead of it's contents.
+		//Useful for non-textonly archive files 
+		//$record->input = $file->get_content();
+		$record->input = $file->get_contenthash() ;
             }
             if ($files = $fs->get_area_files($context->id, 'mod_assign', 'onlinejudge_output', $record->id)) {
                 $file = array_pop($files);
-                $record->output = $file->get_content();
+		//$record->output = $file->get_content();
+		$record->output = $file->get_contenthash() ;
             }
         }
         $tests[] = $record;
