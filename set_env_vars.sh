@@ -15,3 +15,4 @@ export PATH=$GRADDLE_HOME/bin:$PATH
 
 #virtual device/emulator
 export ANDROID_AVD_HOME=/root/.android/avd
+export PATH=$ANDROID_AV_HOME:$PATH
