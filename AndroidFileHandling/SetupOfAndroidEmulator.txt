@@ -1,0 +1,36 @@
+Download Android studio and open the AVD Manager
+Select Nexus 5x and install the emulator and it's image(R)
+https://dl.google.com/android/repository/emulator-linux-6466327.zip
+260 mb
+
+get a system image (oreo)
+https://dl.google.com/android/repository/sys-img/google_apis_playstore/x86-26_r07.zip
+750 mb
+
+after installing these, go to your sdk folder then go into the emulator folder.
+
+run "./emulator -avd Nexus_5X_API_26 -no-window -no-audio -no-skin"
+
+It might give you an error saying "This user doesn't have permissions to use KVM."
+The solution can be found on this website: "https://stackoverflow.com/questions/42814538/android-studio-2-3-using-emulator-from-console-dev-kvm-device-permission-den"
+
+Just simply run these commands:]
+
+"Simply try this. this was work for me
+
+$ sudo chown username -R /dev/kvm
+
+sometimes you need to run this code also
+
+$ cd Android/Sdk/emulator/lib64/libstdc++
+$ mv libstdc++.so.6 libstdc++.so.6.bak
+$ ln -s /usr/lib64/libstdc++.so.6"
+
+run "./emulator -avd Nexus_5X_API_26 -no-window -no-audio -no-skin"
+To run the headless emulator.
+To get the name of the emulator run adb devices. It should be listed.
+
+the last thing to do now is run the MarkProject.sh script and you are done
+
+this should run the tests and return a reports file
+
