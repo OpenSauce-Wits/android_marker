@@ -5,3 +5,6 @@ matrix:
         - mvn clean cobertura:cobertura coveralls:report
 
     -language: php
+      php:
+        -5.6
+        -7.0
