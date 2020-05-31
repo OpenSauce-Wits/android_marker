@@ -1,8 +1,6 @@
 <?php
-$data = array( "59df21a17f3e3ee286d9eec590198bd4d10a70cf" => "/tmp/trash/59df21a17f3e3ee286d9eec590198bd4d10a70cf",
-"9bc815f099ddc65bc4e686a43145c689b56062bd" => "/tmp/trash/9bc815f099ddc65bc4e686a43145c689b56062bd") ;
-
-$data_string = json_encode( $data) ;
+$data_string = '{"language":"1","source":"b474b1d83fcd3f760d1497a30ffb6a4252ddf0d9","input":"57dd7cf59e04300eb1edcb9e2e3026169af3af87","output":"b66b45e80a34c62886588084b62d2fbf34c31faf","timelimit":"1"}' ;
+$data_string = json_encode( json_decode( $data_string)) ;
 
 $options = array(
 	'http' => array(
@@ -14,7 +12,7 @@ $options = array(
 );
 
 $context = stream_context_create( $options) ;
-$result = file_get_contents( "http://192.168.17.128/get_files.php", false, $context) ;
+$result = file_get_contents( "http://192.168.17.128/marker_server/mark.php", false, $context) ;
 
-print_r( $result) ;
+echo $result ;
 ?>
