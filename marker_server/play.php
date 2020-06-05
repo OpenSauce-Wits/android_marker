@@ -1,3 +1,4 @@
 <?php
-	copy( "/tmp/marker_server/source/dir/to/file1.ext", "/tmp/marker_server/android_project/dest/of/file1/");
+require_once( "config.php") ;
+shell_exec( "cd ".settings::$marker_tools." && echo emulator | ./start_avd.sh") ;
 ?>

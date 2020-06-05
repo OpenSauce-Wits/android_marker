@@ -16,87 +16,72 @@ $task = json_decode($inputJSON, TRUE);        // Decode the JSON object
 log_( "Mark.php received input : ".$inputJSON) ;
 log_( "Mark.php is currently testing the returning of results.") ;
 
+//getting contenthashes of source files, testcases and source_structure files
 $source = $task["source"] ;
-//$source = json_decode( $task["source_hashes"][0][0]) ;
 $source_structure = $task["input"] ;
 $testcases = $task["output"] ;
 $timelimit = $task["timelimit"] ;
 
-//init feedback provider
+//init feedback provider 
+//TODO init fb provder with url to report judge status to moodle
 $feedbackprovider = new feedback_provider() ;
 //init marker
 $marker = new marker( $feedbackprovider) ;
 
-//download tests and source files
-$copy_urls = array() ;
-$copy_urls[] = array( $source => settings::$source."/".$source) ;
-$copy_urls[] = array( $testcases => settings::$testcases."/".$testcases) ;
-$copy_urls[] = array( $source_structure => settings::$source_structure."/".$source_structure) ;
+//TODO marker object should be null if construction failed
+//TODO feedback provider object should be null if construction failed
 
-$urls_json = json_encode( $copy_urls) ;
+$testcases_dest = settings::$testcases ;
+$source_dest = settings::$source ;
+$source_structure_dest = settings::$source_structure ;
 
-//TODO prepare or validate existence of marker_server tmp dir
-
-$options = array(
-	'http' => array(
-		'method' => 'POST',
-		'content' => $urls_json,
-		'header' => 'Content-Type: application/json\r\n'.
-		"Accept: application/json\r\n"
-	)
+$files = array( "testcases" => array( $testcases, $testcases_dest),
+	"source" => array( $source, $source_dest),
+	"source_structure" => array( $source_structure, $source_structure_dest) 
 );
-$context = stream_context_create( $options) ;
-$result = file_get_contents( settings::$getfiles_url, false, $context) ;
-$result = json_decode( $result) ;
 
-$project_files = array() ; ////<files used to build project { "name_of_file" : "<path>/<to>/<zip>/<file>"} 
-/*
-//TODO check value of $result and report to judge if file copying failed
-foreach ( $result as $res)
+//fetch files from client
+$files_fetched = $marker->get_client_files( $files) ;
+
+//build project
+if( $files_fetched)
 {
-	foreach( $res as $name => $contents)
+	//build project
+	if( $marker->build_project( $testcases, $source_structure, $source))
 	{
-		if( $res == "error")
+		//TODO start marking android project
+		//initialize gradle handler
+		$gradle_handler = new gradle_handler( $feedbackprovider) ;
+		if( $gradle_handler->run_gradle_task( "clean"))
 		{
-			//reporting failure to moodle
-			$result = array( "result" => ONLINEJUDGE_STATUS_INTERNAL_ERROR,
-				"stderr" => $contents,
-				"stdout" => "0"
-			);
-			break ;
+			//run unit tests
+			if( $gradle_handler->run_gradle_task( "testDebugUnitTest"))
+			{
+				log_( "DOME// report tets results to moodle") ;
+			}
+			else
+			{
+				log_("Failed to run tests") ;
+			}
 		}
-		else if( $contents == false)
+		else
 		{
-			$result = array( "result" => ONLINEJUDGE_STATUS_INTERNAL_ERROR,
-				"stderr" => "File ".$name." failed to copy.",
-				"stdout" => "0"
-			);
-			break ;
-		}
-		else if ($contents == true)
-		{
-			if( $name == $testcases)
-			{
-				$project_files[] = array( 'testcases' => settings::$testcases."/".$name);
-			}
-			else if ( $name == $source)
-			{
-				$project_files[] = array( 'source' => settings::$source."/".$source) ;
-			}
-			else if ( $name == $source_structure)
-			{
-				$project_files[] = array( 'source_structure' => settings::$source_structure."/".$name ) ;
-			}
+			log_( "Something failed in the gradle handles.") ;
 		}
 	}
+	else
+	{
+		//TODO report to moodle
+		log_( "DOME// report failure to build project to moodle.") ;
+	}
 }
-*/
-/*
-//build android project
-//$project = build_project( $project_files) ;
+else
+{
+//TODO report to moodle
+	log_( "FIXME// Report judge status to moodle.") ;
+}
 
 //returning result
-echo json_encode( $project) ;
 $result = array(
         "result" => ONLINEJUDGE_STATUS_PENDING,
         "stdout" => "0",
@@ -114,7 +99,6 @@ $result = array(
 ) ;
 //returning result
 echo json_encode( $result) ;
- */
 ###PLAYING WITH MARKER FEEDBACK AND GRADING
 ###CASE 1 : LANGUAGE NOT SET
 $outputs = array( "result" => ONLINEJUDGE_STATUS_INTERNAL_ERROR , "oj_feedback" => "MOCK RESULT : Marker error: Invalid Language") ;

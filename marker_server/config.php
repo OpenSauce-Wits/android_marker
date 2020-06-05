@@ -14,6 +14,7 @@
  */
 class settings {
 
+    public static $marker_tools ; ///< dir to android sdk, bash scipts and more
     public static $temp;        ///< Prefix for temp folder
     public static $keep_files;  ///< Delete folders when the marker completes
     public static $testcases; ///< Folder to store downloaded test cases
@@ -22,15 +23,20 @@ class settings {
     public static $getfiles_url;
     public static $project_dir ;
     public static $source_structure ;
+    public static $marker_data ;
+    public static $marker_logs ;
 }
 
+settings::$marker_tools = "/var/marker_tools" ;
+settings::$marker_data = "/var/marker_data" ;
+settings::$marker_logs = "/var/marker_data/logs" ;
 settings::$keep_files = true;
-settings::$testcases = "/tmp/marker_server/testcases";
-settings::$source = "/tmp/marker_server/source" ;
-settings::$source_structure = "/tmp/marker_server/source_structure" ;
+settings::$testcases = "/var/marker_data/marker_server/testcases";
+settings::$source = "/var/marker_data/marker_server/source" ;
+settings::$source_structure = "/var/marker_data/marker_server/source_structure" ;
 settings::$auth_token = array("witsoj_token" => "1e6947ac7fb3a9529a9726eb692c8cc5", "witsoj_name" => "marker.ms.wits.ac.za");
-settings::$project_dir = "/tmp/marker_server/android_project" ;
-settings::$temp = "/tmp/marker_server";
+settings::$project_dir = "/var/marker_data/marker_server/android_project" ;
+settings::$temp = "/var/marker_data/marker_server";
 settings::$getfiles_url= "http://192.168.17.128/get_files.php";
 
 //OJ return statuses

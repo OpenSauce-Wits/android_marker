@@ -75,540 +75,6 @@ function recurse_copy($source, $dest)
 	return true;
 }
 
-/**
- * Object representing a source code file.
- */
-class program_file {
-
-	public $path;       ///< Folder containing the file
-	public $filename;   ///< Filename without extension
-	public $extension;  ///< Extension, based on the language
-	public $fullname;   ///< Absolute Path and Filename
-	public $sourcefile; ///< Replaces sourcefile in commands
-	public $id;         ///< Submission ID
-	public $commands;   ///< Commands with Keywords Replaced
-	public $tests;       ///< Tests with Keywords Replaced 
-	public $timelimit;   ///< Timelimit. Currently only used by the matlab marker   
-	public $firstname;
-	public $lastname;
-	public $userid;
-
-	/**
-	 * Constructor
-	 * @param array $lang Array containing information about the Language
-	 * @param string $sourcecode All the sourcecode to be written to the file
-	 * @param string $input Optional Input data to be written to file
-	 */
-
-	function program_file($lang, $sourcecode, $markerid, $timelimit, $sourcepath = "", $extra_path = "", $firstname = "", $lastname = "", $userid = "") {
-		// Get filename extension from $lang
-		$this->extension = $lang['extension']; //TODO allow override from student file
-		// All files are called source
-		$this->filename = "source";
-		$this->sourcefile = "$this->filename.$this->extension";
-		$this->timelimit=$timelimit;
-		$this->markerid = $markerid;
-		$this->firstname = $firstname;
-		$this->lastname = $lastname;
-		$this->userid = $userid;
-
-		// Get the Submission ID
-		$this->id = date("Ymd-His-") . uniqid("", $more_entropy = true);
-
-		// Construct the path
-		$this->path = settings::$temp;
-		if(trim($extra_path) != "" and substr($extra_path, -1) != "/"){
-			$extra_path .= "/";
-		}
-		$this->path = "$this->path/$this->extension/$extra_path$this->id";
-		// Construct the full path/file
-		$this->fullname = "$this->path/$this->filename.$this->extension";
-
-		// Create the folder
-		mkdir($this->path, 0777, $recursive = true);
-		// Save the code
-		file_put_contents($this->fullname, $sourcecode);
-
-		error_log("cp -r \"$sourcepath/*\" \"" . $this->path . "\"");
-		$success = recurse_copy($sourcepath, $this->path);
-		//system("cp -r \"$sourcepath/\" \"" . $this->path . "\"", $success);
-		if(!$success){
-			$exception = new Exception("Marker Error" . $success);
-			$exception->details = array(result_marker_error, -1, array("Marker Error: Unable to copy testcases."));
-			throw $exception;
-		}
-		// setup commands
-		$this->compile_commands = $lang['compile'];
-		$this->compile_tests = $lang['compile_tests'];
-		$this->commands = $lang['commands'];
-	}
-
-	/**
-	 * Iterates through commands from the language description and replaces 
-	 * keywords with the relevant paths
-	 * @param array $comm Array of commands
-	 * @return Array of commands with keywords replaced
-	 */
-	function setup_commands($comm, $inputfile, $outputfile, $args = '') {
-		$temp = $comm;
-                $inputfilenoex = substr($inputfile, 0, strpos($inputfile, '.'));
-		//if($args != ''){
-		//	$args = '"'.$args.'"'; // Add quotes around args if it exists
-		//}
-		foreach ($temp as $key => $value) {
-			$value = str_replace("~sourcefile~", $this->sourcefile, $value);
-			$value = str_replace("~sourcefile_noex~", $this->filename, $value);
-			$value = str_replace("~input~", $inputfile, $value);
-			$value = str_replace("~input_noex~", $inputfilenoex, $value);
-			$value = str_replace("~output~", $outputfile, $value);
-			$value = str_replace("~markers~", getcwd(), $value);
-			$value = str_replace("~path~", $this->path, $value);
-			$value = str_replace("~args~", $args, $value);
-			$value = str_replace("~timeout~", $this->timelimit, $value);
-			$value = str_replace("~markerid~", $this->markerid, $value);
-$firstname = preg_replace('/\s+/', '', $this->firstname);
-$lastname = preg_replace('/\s+/', '', $this->lastname);
-			$value = str_replace("~firstname~", $firstname, $value);
-			$value = str_replace("~lastname~", $lastname, $value);
-			$value = str_replace("~userid~", $this->userid, $value);
-			$temp[$key] = $value;
-		}
-		return $temp;
-	}
-
-	/**
-	 * Destructor deletes the relevant directory unless settings::$keep_files is
-	 * set to true.
-	 */
-	function __destruct() {
-		if (!settings::$keep_files) {
-			deleteDirectory($this->path);
-		}
-	}
-
-}
-
-/**
- * Kill a process and all of its children. 
- * TODO: This function needs some testing with regards to programs
- * with threads and/or forks.
- * Is this code necessary if the bash script killer runs?
- * @param int $process PID of the process to kill
- * @return int exit code of the process
- */
-function killprocess($process) {
-	$status = proc_get_status($process);
-	if ($status['running'] == true) { //process ran too long, kill it
-		//close all pipes that are still open
-		fclose($pipes[1]); //stdout
-		fclose($pipes[2]); //stderr
-		//get the parent pid of the process we want to kill
-		$ppid = $status['pid'];
-		//use ps to get all the children of this process, and kill them
-		$pids = preg_split('/\s+/', `ps -o pid --no-heading --ppid $ppid`);
-		foreach ($pids as $pid) {
-			if (is_numeric($pid)) {
-				posix_kill($pid, 9); //9 is the SIGKILL signal
-			}
-		}
-
-		return proc_close($process);
-	}else{
-		return $status['exitcode'];
-	}
-}
-
-function mark_log($text){
-	file_put_contents(settings::$temp."/log.txt", $text);
-}
-
-/**
- * Runs a program with a timelimit and input.
- * @param string $path  Working directory of the program. 
- *      The system cd's to this path before running the program.
- * @param type $program The program within $path that should execute
- * @param type $input   Input to the program on stdin
- * @param type $limit   Optional Time limit in seconds
- * @return Array containing stdout, stderr and exit code (result).
- * @throws Exception if the program cannot be started.
- */
-function run($path, $program, $input, $limit = -1) {
-	$descriptorspec = array(
-		0 => array('pipe', 'r'), // stdin is a pipe that the child will read from
-		1 => array('pipe', 'w'), // stdout is a pipe that the child will write to
-		2 => array('pipe', 'w')  // stderr is a pipe the child will write to
-	);
-
-	if ($limit == -1) {
-		$execString = "cd $path; $program";
-	} else {
-		$execString = getcwd() . "/timeout_runner.sh '$path' '$program' $limit";
-
-	}
-	$process = proc_open($execString, $descriptorspec, $pipes);
-	if (!is_resource($process)) {
-		throw new Exception('bad_program could not be started.');
-	}
-	//pass some input to the program
-	fwrite($pipes[0], $input);
-	//close stdin. By closing stdin, the program should exit
-	//after it finishes processing the input
-	fclose($pipes[0]);
-
-	//do some other stuff ... the process will probably still be running
-	//if we check on it right away
-	$output = '';
-	if (is_resource($process)) {
-		while (!feof($pipes[1])) {
-			$return_message = fgets($pipes[1], 1024);
-			if (strlen($return_message) == 0)
-				break;
-
-			$output .= $return_message;
-			ob_flush();
-			flush();
-		}
-	}
-	$len = strlen($output);
-	if ($len>output_max_length)
-		$output = substr($output, 0, output_max_length);
-	$stderr = '';
-	if (is_resource($process)) {
-		while (!feof($pipes[2])) {
-			$return_message = fgets($pipes[2], 1024);
-			if (strlen($return_message) == 0)
-				break;
-
-			$stderr .= $return_message;
-			ob_flush();
-			flush();
-		}
-	}
-	$len = strlen($stderr);
-	if ($len>output_max_length)
-		$stderr = substr($stderr, 0, output_max_length);
-
-	$res = killprocess($process);
-
-	return array('stdout' => $output, 'stderr' => $stderr, "result" => $res, "exec" => $execString);
-}
-
-function update_status($curr, $update){
-	if($curr == null){
-		return $update;
-	}
-	if($curr === $update){
-		return $curr;
-	}
-	return ONLINEJUDGE_STATUS_MULTI_STATUS;
-}
-
-/**
- * The main marking function. This is called from the webservice, saves the
- * source code, runs the commands and checks the output.
- * @param int $language    Language ID found in the languages.json file.
- * @param string $sourcecode  The source code/binary the program.
- * @param string $input   Input to the program on STDIN and the input file.
- * @param string $output  The expected output of the program on STDOUT.
- * @param int $timelimit   Time limit for the "run" command.
- * @return string array containing STDERR, STDOUT and the result.
- */
-function mark($sourcecode, $tests, $language, $userid, $firstname, $lastname, $markerid, $cpu_limit, $mem_limit, $pe_ratio) {
-	$string = file_get_contents("languages.json");
-	$languages = json_decode($string, true); // THIS IS NOT PARSING PROPERLY AT THE MOMENT?!
-	foreach ($languages as $k => $v){
-		error_log("Comparing: " . $language . " and " . $v["name"] . " ($k)");
-		if($v["name"] == $language){
-			$language = $k;
-			error_log("Using: " . $language);
-			break;
-		}
-	}
-
-	if(!isset($languages[$language])){
-		// TODO: Invalid Language Selection
-		error_log("Invalid Language");
-		$outputs = array("result" => result_marker_error, "oj_feedback" => "Marker Error: Invalid Language");
-		return array("status" => result_marker_error, "oj_feedback" => "Marker Error: Invalid Language", "grade" => -1.0, "outputs" => array($outputs) );
-	}
-	$lang = $languages[$language];
-
-	$prefix = $userid . "/";
-	$code = new program_file($lang, $sourcecode, $markerid, $cpu_limit, $tests["path"], $prefix, $firstname, $lastname, $userid);
-
-	$compile_commands = $code->setup_commands($code->compile_commands, "input", "output");
-	$compile_tests    = $code->setup_commands($code->compile_tests   , "input", "output");
-	foreach ($compile_commands as $key => $command) {
-		$runner = (($key=="run")||(strpos($key, "time")===0));
-		if ($runner) {
-			$outputs = run($code->path, $command, "", $cpu_limit);
-			if(strpos($outputs["stderr"], 'Time limit exceeded') !== FALSE){
-				$outputs["result"] = result_compile_error;
-				$outputs["oj_feedback"] = "Compile Time Exceeded";
-				return array("status" => result_compile_error, "oj_feedback" => "Compile Time Limit Exceeded", "grade" => 0.0, "outputs" => array($outputs));
-			}
-		} else {
-			$outputs = run($code->path, $command, "");
-		}
-		if (array_key_exists($key, $compile_tests)) {
-			$filename = $code->path . "/" . $compile_tests[$key];
-			if (!file_exists($filename)) {
-				$outputs["oj_feedback"] = "Compile Error";
-				$outputs["result"] = result_compile_error;
-				return array("status" => result_compile_error, "oj_feedback" => "Compile Error", "grade" => 0.0, "outputs" => array($outputs));
-			}
-		}
-	}
-
-	$all_outputs = array();
-	$total_grade = 0.0;
-	$max_grade = 0.0;
-	$status = null;
-	// Run each test case
-	foreach ($tests["yml"]["test_cases"] as $tc){
-		$outputs = null;
-		$timeout_problem = false;
-		$result = array();
-		$commands = $code->setup_commands($code->commands, $tc["in"], $tc["out"], $tc["args"]);
-		// Run each command
-		foreach ($commands as $key => $command) {
-			$runner = (($key=="run")||(strpos($key, "time")===0));
-			$input = file_get_contents($code->path . "/" . $tc["in"]);
-			$input = str_replace("\r", "", $input);
-			if ($key == "display"){
-				$displayout = run($code->path, $command, $input);
-			} elseif ($runner) {
-				$outputs = run($code->path, $command, $input, $cpu_limit);
-				if(strpos($outputs["stderr"], 'Time limit exceeded') !== FALSE or strpos($outputs["stdout"], 'Time limit exceeded') !== FALSE){
-					$timeout_problem = true;
-					break;
-				}
-			} else {
-				$outputs = run($code->path, $command, $input);
-			}
-		}
-		if(!isset($tc["feedback"])){
-			$tc["feedback"] = "";
-		}
-		if($timeout_problem){
-			// Check if we had a timeout
-			$outputs["result"] = result_time_limit;
-			$outputs["oj_feedback"] = $tc["feedback"];
-			$outputs["path"] = $code->path;
-			$outputs["grade"] = 0.0;
-			$outputs["max_grade"] = $tc["points"];
-			$max_grade += floatval($tc["points"]);
-			$status = update_status($status, result_time_limit);
-		}else{
-			// No timeout, check for correctness
-			$model_output = file_get_contents($code->path . "/" . $tc["out"]); 	// Fetch the output
-			$model_output = str_replace("\r", "", $model_output);			// Remove \r just in case
-
-			$outputs['stdout'] = trim(str_replace("\r", "", $outputs['stdout']));		// Remove \r from student output
-			$outputs["result"] = test_output($model_output, $outputs['stdout']);	// Check the output
-			$outputs["progout"] = trim($outputs['stdout']);				// Actual output
-			if(isset($displayout)){
-				$outputs["stdout"] = trim($displayout['stdout']);				// Actual output
-			}
-			$outputs["modelout"] = trim($model_output);				// Model output
-			//$outputs["progout"] = trim($outputs['stdout']);				// Actual output
-			$outputs["path"] =  $code->path;					// Path on marker
-			$outputs["max_grade"] = $tc["points"];
-			$max_grade += floatval($tc["points"]);
-			
-			if($outputs["result"] === result_presentation_error){			// Presentation Error
-				$total_grade += $pe_ratio * floatval($tc["points"]);			//	Scale by pe_ratio
-				$outputs["grade"] = $pe_ratio * floatval($tc["points"]);
-				$outputs["oj_feedback"] = $tc["feedback"];
-				$status = update_status($status, result_presentation_error);
-			}else if($outputs["result"] === result_correct){			// Correct
-				$total_grade += $tc["points"];					//	Add full points
-				$outputs["grade"] = $tc["points"];
-				$outputs["oj_feedback"] = $tc["feedback"];	
-				$status = update_status($status, result_correct);		
-			}else if($outputs["result"] === result_incorrect){			// Incorrect (or something else)
-				$outputs["grade"] = 0.0;					// 	0 Marks
-				$outputs["oj_feedback"] = $tc["feedback"];	
-				$status = update_status($status, result_incorrect);	
-			}else{
-				$outputs["grade"] = 0.0;					// 	0 Marks
-				$outputs["oj_feedback"] = "Unknown Error, Check Marker";				
-			}
-		}
-		$all_outputs[] = $outputs;
-	}
-
-	error_log("TOTALGRADE: " . $total_grade);
-	return array("status" => $status, "oj_feedback" => "Graded", "grade" => $total_grade*100.0/$max_grade, "outputs" => $all_outputs);
-}
-
-/**
- * Compare ideal and program outputs. Checks for an exact match 
- * then for presentation errors.
- * @param string $correct Ideal output.
- * @param string $progoutput Program output.
- * @return int result code.
- */
-function test_output($correct, $progoutput) {
-	$correct = trim($correct);
-	$progoutput = trim($progoutput);
-	if ($correct == $progoutput) {
-		return result_correct;
-	}
-
-	$correct = strtolower($correct);
-	$correct = str_replace(" ", "", $correct);
-	$correct = str_replace("\t", "", $correct);
-	$correct = str_replace("\n", "", $correct);
-
-	$progoutput = strtolower($progoutput);
-	$progoutput = str_replace(" ", "", $progoutput);
-	$progoutput = str_replace("\t", "", $progoutput);
-	$progoutput = str_replace("\n", "", $progoutput);
-	error_log($correct);
-	error_log($progoutput);
-	if ($correct == $progoutput) {
-		error_log("Presentation Error");
-		return result_presentation_error;
-	} else {
-		error_log("Incorrect Result");
-		return result_incorrect;
-	}
-}
-
-function test_filename($testcases){
-	return settings::$testcases . "/tests/" . $testcases["contenthash"];
-}
-function fetch_tests($testcases, $base_path){
-	// Paths
-	$contenthash = $testcases["contenthash"];
-	$path_folder = $base_path . $contenthash;
-	$path_zip = $path_folder . ".zip";
-	// Check if the base directory exists
-	if(!file_exists($base_path)){
-		mkdir($base_path, 0777, $recursive = true);
-	}
-	// Check if the zip file exists. If not, download it.
-	if(!file_exists($path_zip)){
-		// Setup cURL
-		$fileHandle = fopen($path_zip, 'w+');
-		$ch = curl_init($testcases["url"]);
-		curl_setopt_array($ch, array(
-			CURLOPT_POST => count(settings::$auth_token),
-			CURLOPT_RETURNTRANSFER => TRUE,
-			CURLOPT_BINARYTRANSFER => TRUE,
-			CURLOPT_POSTFIELDS => http_build_query(settings::$auth_token),
-			CURLOPT_FILE => $fileHandle,
-			CURLOPT_TIMEOUT => 30
-		));
-
-		// Send the request
-		curl_exec($ch);
-
-		fclose($fileHandle);
-		// Check that we actually downloaded the file now
-		if(!file_exists($path_zip)){
-			fatal("Unable to download test cases.");
-			return false;
-		}
-	}
-
-	// Check the file downloaded correctly
-	$sha1file = sha1_file($path_zip);
-	if($sha1file != $contenthash){
-		unlink($path_zip);
-		fatal("Invalid testcase SHA1.");
-		return false;
-	}
-	// Unzip the file
-	$zip = new ZipArchive;
-	$res = $zip->open($path_zip);
-	if ($res === TRUE) {
-		$zip->extractTo($path_folder);
-		$zip->close();
-	} else {
-		fatal('Unable to exctract test cases.');
-		return false;
-	}
-	return true;
-}
-
-function fatal($str){
-	die('{ "fatalstatus" : "' . $str . '"}');
-}
-
-/**
- * Check if test cases have been downloaded already, if not download them.
- * @param string $correct Ideal output.
- * @param string $progoutput Program output.
- * @return int result code.
- */
-function testcases($testcases) {
-	// Get the paths of the test cases
-	$path = settings::$testcases . "/";
-	$path_extracted = $path . $testcases["contenthash"];
-
-	// Check for the extracted folder
-	if(!file_exists($path_extracted)){
-		if(!fetch_tests($testcases, $path)){
-			fatal("Failed to fetch tests.");
-		}
-	}
-
-	$manifest = $path_extracted . "/init.yml";
-	$yml = yaml_parse_file($manifest);
-	if(!$yml){
-		fatal("Unable to parse init.yml file to load test cases.");
-	}
-	$defaults = array("args" => "");
-	foreach($yml["test_cases"] as $k=>$v){
-		foreach($defaults as $key => $def){
-			if(!isset($yml["test_cases"][$k][$key])){
-				$yml["test_cases"][$k][$key] = $def;
-			}
-		}
-        }
-
-	return array("path" => $path_extracted, "yml" => $yml);
-}
-
-function return_grade($callback, $markerid, $userid, $grade, $status, $oj_testcases, $oj_feedback){
-	// Setup cURL
-	$data['witsoj_token'] = settings::$auth_token['witsoj_token'];
-	$data['markerid'] = $markerid;
-	$data['userid'] = $userid;
-	$data['grade'] = $grade;
-	$data['status'] = $status;
-	$data['oj_testcases'] = $oj_testcases;
-	$data['oj_feedback'] = $oj_feedback;
-	$data['witsoj_name'] = settings::$auth_token['witsoj_name'];
-
-	$ch = curl_init($callback);
-	curl_setopt_array($ch, array(
-		CURLOPT_POST => count($data),
-		CURLOPT_RETURNTRANSFER => TRUE,
-		CURLOPT_HTTPHEADER => array(
-			//'Content-Type: application/json'
-			'Content-Type: text/plain'
-		),
-		CURLOPT_POSTFIELDS => json_encode($data)
-	));
-	// Send the request
-	$response = curl_exec($ch);
-	var_dump($response);
-
-	// Check for errors
-	if($response === FALSE){
-		die("Curl Error: " . curl_error($ch));
-	}
-
-	if($response != '{"status" : "0"}'){
-		error_log($response);
-		return false;
-	}
-	return true;
-}
-
 //THABO R added
 /*@param $project_files array files in format {"name" :<dir_to_file>}
  * @return $project an array containing { true : <dir_to_android_project>} else { false : $message}
@@ -750,27 +216,340 @@ function log_( $message)
 class marker
 {
 	public $feedbackprovider = null ;
-	public $rootdir = settings::$temp ;
+	public $rootdir = null;
+	public $getfiles_url = null ; ///< client files host
+	public $project_builder = null ;
+
 	function __construct( $feedbackprovider)
 	{
+		$this->rootdir = settings::$temp ;
+		$this->getfiles_url = settings::$getfiles_url ;
 		if( !isset( $feedbackprovider))
 		{
+			log_( "Feedback provider not available.") ;
 			die( "Feedback provider not available.") ;
 		}
-		
-		if( !create_dir( $rootdir))
+
+		$this->feedbackprovider = $feedbackprovider ;
+
+		if( !create_dir( $this->rootdir))
 		{
-			$feedbackprovider->log_error( "MARKER ERROR", "Failed to create directory".$rootdir) ;
+			$feedbackprovider->log_error( "MARKER ERROR", "Failed to create directory ".$this->rootdir) ;
+			log_( "Failed to create essential directories.") ;
 			die( "Failed to create essential directories.") ;
 		}
 	}
 
+	/* @function get_client_files - downloads the specified files from the client side
+	 * @param $files - associative array of keys $filename => array( "filename" , [$source , $dest])
+	 * @return false if we fail to get any of the files else true
+	 */
+	public function get_client_files( $files)
+	{
+		try
+		{
+			$data = json_encode( $files) ;
+			$options = array(
+        			'http' => array(
+                		'method' => 'POST',
+                		'content' => $data,
+                		'header' => 'Content-Type: application/json\r\n'.
+                		"Accept: application/json\r\n")
+			);
+
+			$context = stream_context_create( $options) ;
+			$result = file_get_contents( $this->getfiles_url, false, $context) ;
+			//result is returned in the form 'filename' => TRUE - success else FALSE
+			$result = json_decode( $result) ;
+
+			if( !isset( $result))
+			{
+				$feedbackprovider->log_error( "MARKER ERROR", "Could not get response from ".$this->getfiles_url) ;
+				return false ;
+			}
+			else if( array_key_exists( 'error', $result))
+			{
+				$feedbackprovider->log_error("MARKER ERROR", "Fatal error encountered at ". $this->getfiles_url." Couldn't download files.") ;
+				return false ;
+			}
+			
+			//check if any of the files failed to download
+			foreach ( $result as $filename => $success)
+			{
+				if( !$success)
+				{
+					$feedbackprovider->log_error( "MARKER ERROR", "File ".$filename." download failed.") ;
+					return false ;
+				}
+			}
+
+		}
+		catch( \Exception $e)
+		{
+			$feedbackprovider->log_error( "MARKER ERROR", "Exception encoutered whilst downloading files from client.") ;
+			return false ;
+		}
+		return true ;
+	}
+
 	public function get_root_dir()
 	{
-		return $rootdir ;
+		return $this->rootdir ;
+	}
+
+	/*@function build_project - builds a complete android project
+	 * @param $tests - name of the zipfile containing lecture's test code
+	 * @param $structurefile - name of json file containing project structure file
+	 * @param $source - name of zip file containing student's source code
+	 * @return true for successful project build else false
+	 */
+	public function build_project( $tests, $structurefile, $source)
+	{
+		//TODO check whether project build was fully initialised
+		$this->project_builder = new project_builder( $tests, $structurefile, $source, $this->feedbackprovider) ;
+
+		if( !$this->project_builder->all_dirs_available())
+		{
+			return false ;
+		}
+
+		//unzip tests to final project dir
+		if( !$this->project_builder->unzip_tests_to_project_dir())
+		{
+			return false ;
+		}
+		//unzip source files to temp directory
+		else if( !$this->project_builder->unzip_source_files())
+		{
+			return false ;
+		}
+		//move source files into final project directory
+		else if( !$this->project_builder->move_source_files_to_project_dir())
+		{
+			return false ;
+		}
+
+		return true ;
+		
 	}
 }
 
+class gradle_handler
+{
+	private $marker_tools = null ;
+	private $marker_data = null ;
+	private $marker_logs = null ;
+	private $feedbackprovider = null ;
+	private $gradle_logs = null ;
+
+	public function __construct( $feedbackprovider)
+	{
+		$this->marker_tools = settings::$marker_tools ;
+		$this->marker_data = settings::$marker_data ;
+		$this->marker_logs = settings::$marker_logs ;
+
+		if( $feedbackprovider == null)
+		{
+			log_( "Feedback provider not available.") ;
+			die( "Feedback provider not available.") ;
+		}
+		$this->feedbackprovider = $feedbackprovider ;
+
+		if( !file_exists( $this->marker_tools))
+		{
+			$this->feedbackprovider->log_error( "GRADLE ERROR", "Marker tools directory $this->marker_tools not found.") ;
+			die( "Marker tools directory $this->marker_tools not found.") ;
+		}
+
+		if( !file_exists( $this->marker_data))
+		{
+			$this->feedbackprovider->log_error( "GRADLE ERROR", "Marker data directory $this->marker_data not found.") ;
+			die( "Marker data directory $this->marker_data not found.") ;
+		}
+		else if( !create_dir( $this->marker_logs))
+		{
+			$this->feedbackprovider->log_error( "GRADLE ERROR", "Marker logs directory $this->marker_logs could not be created.") ;
+			die( "Marker logs directory $this->marker_logs could not be created.") ;
+		}
+	}
+
+	/*@function get_task_results fetches the results of a gradle task from a log file
+	 * @return true if mamanged to fetch results, else false
+	 */
+	public function get_task_results()
+	{
+		//check logfile first
+		if( !file_exists( $this->marker_logs."/GRADLE.log"))
+		{
+			return false ;
+		}
+
+		try
+		{
+			$this->gradle_logs = file_get_contents( $this->marker_logs."/GRADLE.log") ;
+		}
+		catch( \Exception $e)
+		{
+			$this->feedbackprovider->log_error( "GRADLE ERROR", "Caught an exception whilst trying to read in contents of gradle log file.") ;
+			return false ;
+		}
+
+		return true ;
+	}
+
+	/* @function run_gradle_task runs the specified gradle task
+	 * @param $task a string specifying the gradle task to be run
+	 * @return true or false depending on whether the task failed or passed
+	 */
+	public function run_gradle_task( $task)
+	{
+		//make sure a task has been specified
+		if( strlen( $task) == 0)
+		{
+			$this->feedbackprovider->log_error( "GRADLE ERROR", "Gradle task specified is empty.") ;
+			return false ;
+		}
+
+		shell_exec( "cd ".settings::$marker_tools." && echo $task | ./run_gradle_task.sh") ;
+	//FIXME might need to wait for the gradle task to finish execution	
+		if( $this->get_task_results())
+		{
+			if( !$this->gradle_task_passed())
+			{
+				$this->feedbackprovider->log_error( "GRADLE ERROR", "Task $task failed.") ;
+				return false ;
+			}
+		}
+
+		return true ;
+	}
+
+	/* @function gradle_task_passed checks whether the log files reported a failure
+	 * @return false if task failed else true
+	 */
+	public function gradle_task_passed()
+	{
+		$pos = strpos( $this->gradle_logs, "FAILURE") ;
+
+		if( $pos !== false )
+		{
+			$this->feedbackprovider->log_error( "GRADLE ERROR", $this->gradle_logs) ;
+			return false ;
+		}
+		
+		return true ;
+	}
+}
+
+class avd_manager
+{
+	private $feedbackprovider = null ;
+	private $avd_logs = null ;
+	private $marker_tools = null ;
+	private $marker_data = null ;
+	private $marker_logs = null ;
+	private $avds = null ; //< an associative arrays storing avd names and an array storing booleans on whether the avd is online and whether it is in use
+
+	function __construct( $feedbackprovider)
+	{
+		$this->marker_tools = settings::$marker_tools ;
+		$this->marker_data = settings::$marker_data ;
+		$this->marker_logs = settings::$marker_logs ;
+		$this->avd_logs = settings::$marker_logs."/AVD.log" ;
+
+		if( $feedbackprovider == null)
+		{
+			log_( "Feedback provider not available.") ;
+			die( "Feedback provider not available.") ;
+		}
+		$this->feedbackprovider = $feedbackprovider ;
+		
+		if( !file_exists( $this->marker_tools))
+		{
+			$this->feedbackprovider->log_error( "AVD ERROR", "Marker tools directory $this->marker_tools not found.") ;
+			die( "Marker tools directory $this->marker_tools not found.") ;
+		}
+
+		if( !file_exists( $this->marker_data))
+		{
+			$this->feedbackprovider->log_error( "AVD ERROR", "Marker data directory $this->marker_data not found.") ;
+			die( "Marker data directory $this->marker_data not found.") ;
+		}
+		else if( !create_dir( $this->marker_logs))
+		{
+			$this->feedbackprovider->log_error( "AVD ERROR", "Marker logs directory $this->marker_logs could not be created.") ;
+			die( "Marker logs directory $this->marker_logs could not be created.") ;
+		}
+	}
+
+	/* @function create_avd creates an avd and adds it by name to the list of available avds
+	 * @param $avdname
+	 * @return true when on no error else false
+	 */
+	public function create_avd( $avdname = null)
+	{
+		if( !isset( $avdname))
+		{
+			$avdname = rand() ;
+			$avdname = md5( $avdname) ;
+		}
+
+		shell_exec( "cd $this->marker_tools && echo $avdname | ./create_avd.sh") ;
+
+		if( $this->load_avds())
+		{
+			return avd_available( $avdname) ;
+		}
+		return false ;
+	}
+
+	public function avd_online()
+	{
+			//TODO check if any avds are online
+			shell_exec( "cd $this->marker_tools && ./check_online_avd.sh") ;
+
+			$logs = file_get_contents( $this->avd_logs) ;
+			if( strpos( $this->avd_logs, "device" ) == false)
+			{
+				$this->feedbackprovider->log_error( "AVD ERROR", "No avd is online.") ;
+				return false ;
+			}
+			return true ;
+	}
+
+	/* @function avd_avalaible checks if the specified avd has been created
+	 * @param $avdname
+	 * @return boolean
+	 */
+	public function avd_available( $avdname)
+	{
+		shell_exec( "cd $this->marker_tools && ./list_avds.sh") ;
+		$data = file_get_contents( $this->avd_logs) ;
+		if( strpos( $this->avd_logs, $avdname) == false )
+		{
+			$this->feedbackprovider->log_error( "AVD ERROR", "AVD $avdname not created.") ;
+			return false ;
+		}
+		return true ;
+	}
+
+	/* @function start_avd powers on the specified avd
+	 * @param $avdname
+	 * @return boolean
+	 */
+	public function start_avd( $avdname)
+	{
+		if( $this->avd_available( $avdname))
+		{
+			//TODO really start it from here
+			//for now just return true, we'll start it from terminal
+			return true ;
+		}
+
+		return false ;
+	}
+
+}
 class feedback_provider
 {
 	/*Class for storing feedback to be provided to moodle when running android things
@@ -787,6 +566,14 @@ class feedback_provider
 		//TODO store in some way
 		log_( $error_type. "::::".$error_message) ;
 	}
+
+	/* @function get_test_results fetches unit tests and instrumented tests results
+	 * @return returns a json object of the form { FAILED : BOOL , UNIT : { test : status, ... }, INSTRUMENTED : { test : status, ...} }
+	 */
+	public function get_test_results()
+	{
+		return true ;
+	}
 }
 
 class project_builder
@@ -796,77 +583,91 @@ class project_builder
 	 */
 
 	public $feedbackprovider = null;
-	private $serverrootdir = settings::$temp ;
+	private $serverrootdir = null ;
 	private $dirtotests = null;
 	private $dirtostructurefile = null;
 	private $dirtosource = null ;
-	private $temp_dir = settings::$temp."/temp" ;
-	
+	private $temp_dir = null ;
+	private $finalprojectdir = null ;
+
 	private $alldirsavailable = TRUE ;
 	/*Constructor
-	 * @param $dirtotests - string specifying the path to tests zip file in the server
-	 * @param $dirtostructurefile - string specifying the path to lecture's json file( in the server)
+	 * @param $tests - string specifying the name of tests zip file in the server
+	 * @param $structurefile - string specifying the name of lecture's json file( in the server)
 	 * which specifies the required structure of the student's submission
-	 * @param $dirtosource - string specifying the path to the student's source zip file
+	 * @param $source - string specifying the name of the student's source zip file
+	 * @param $feedbackprovider
 	 */
-	function __construct( $dirtotests, $dirtostructurefile, $dirtosource, $finalprojectdir, $feedbackprovider)
+	function __construct( $tests, $structurefile, $source, $feedbackprovider)
 	{
+		$this->serverrootdir = settings::$temp ;
+		$this->temp_dir = settings::$temp."/temp" ;
+		$this->dirtotests = settings::$testcases."/".$tests ;
+		$this->dirtostructurefile = settings::$source_structure."/".$structurefile ;
+		$this->dirtosource = settings::$source."/".$source ;
+		$this->finalprojectdir = settings::$project_dir ;
 		if( $feedbackprovider == null)
 		{
+			log_( "Feedback provider not available.") ;
 			die( "Feedback provider not available.") ;
 		}
-		if( !isset( $finalprojectdir))
+		$this->feedbackprovider = $feedbackprovider ;
+
+		if( !isset( $this->finalprojectdir))
 		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Final project folder not specified.") ;
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Final project folder not specified.") ;
+			log_( "No project folder specified.") ;
 			die( "No project folder specified.") ;
 		}
-		else if( !$this->create_dir( $this->serverrootdir."/".$finalprojectdir, true))
+		else if( !create_dir( $this->finalprojectdir, true))
 		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Failed to created final project directory ".$finalprojectdir) ;
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Failed to created final project directory ".$this->finalprojectdir) ;
 			$this->alldirsavailable = FALSE ;
 		}
 
-		if( !isset( $dirtotests))
+		if( !isset( $this->dirtotests))
 		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Directory to the test files not specified.") ;
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Directory to the test files not specified.") ;
 			$this->alldirsavailable = FALSE ;
 		}
-		else if( !file_exists( $dirtotests))
+		else if( !file_exists( $this->dirtotests))
 		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Test files ".$dirtotests." not found.") ;
-			$this->alldirsavailable = FALSE ;
-		}
-
-		if( !isset( $dirtostructurefile))
-		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Directory to the structure file not specified.") ;
-			$this->alldirsavailable = FALSE ;
-		}
-		else if( !file_exists( $dirtostructurefile))
-		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Structure file ".$dirtostructurefile." not found.") ;
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Test files ".$this->dirtotests." not found.") ;
 			$this->alldirsavailable = FALSE ;
 		}
 
-		if( !isset( $dirtosource))
+		if( !isset( $this->dirtostructurefile))
 		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Directory to the source files not specified.") ;
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Directory to the structure file not specified.") ;
 			$this->alldirsavailable = FALSE ;
 		}
-		else if( !file_exists( $dirtosource))
+		else if( !file_exists( $this->dirtostructurefile))
 		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Source files ".$dirtosource." not found.") ;
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Structure file ".$this->dirtostructurefile." not found.") ;
+			$this->alldirsavailable = FALSE ;
+		}
+
+		if( !isset( $this->dirtosource))
+		{
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Directory to the source files not specified.") ;
+			$this->alldirsavailable = FALSE ;
+		}
+		else if( !file_exists( $this->dirtosource))
+		{
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Source files ".$this->dirtosource." not found.") ;
 			$this->alldirsavailable = FALSE ;
 		}
 
 		//create temp dir
 		if( !create_dir( $this->temp_dir, true))
 		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Failed to create temporary directoroy ".$this->temp_dir) ;
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Failed to create temporary directoroy ".$this->temp_dir) ;
+			$this->alldirsavailable = FALSE ;
+			log_( "Failed to create temporary directory ".$this->temp_dir) ;
 			die( "Failed to create temporary directory ".$this->temp_dir) ;
 		}
 	}
-	
+		
 	public function all_dirs_available()
 	{
 		return $this->alldirsavailable ;
@@ -875,11 +676,6 @@ class project_builder
 	public function unzip_source_files()
 	{
 		return $this->unzip_to( $this->dirtosource, $this->temp_dir) ;
-	}
-
-	public function unzip_structure_file()
-	{
-		return $this->unzip_to( $this->dirtostructurefile, $this->temp_dir) ;
 	}
 
 	/* @function move_source_files_to_project - moves the source files to the project directory
@@ -901,7 +697,7 @@ class project_builder
 						$source_dir = $dirs[0] ;
 						$dest_dir = $dirs[1] ;
 
-						if( !$this->move_file( $filename, $this->temp_dir."/".$source_dir, $this->get_project_dir()."/".$dest_dir))
+						if( !$this->move_file( $filename, ( strlen( $source_dir) > 0 ? $this->temp_dir."/".$source_dir : $this->temp_dir), $this->get_project_dir()."/".$dest_dir))
 						{
 							$success = FALSE ;
 						}
@@ -920,8 +716,11 @@ class project_builder
 	{
 		$dest = json_decode( file_get_contents( $this->dirtostructurefile)) ;
 		if( isset( $dest))
+		{
 			return true ;
+		}
 
+		$this->feedbackprovider->log_error( "BUILD ERROR", "Failed to read in project structure.") ;
 		return false ;
 	}
 
@@ -931,23 +730,26 @@ class project_builder
 		{
 			if( !file_exists( $source_dir))
 			{
-				$feedbackprovider->log_error( "BUILD ERROR", "Failed to move file ".$filename." as source directory ".$source_dir." does not exist.") ;
+				$this->feedbackprovider->log_error( "BUILD ERROR", "Failed to move file ".$filename." as source directory ".$source_dir." does not exist.") ;
 				return false ;
 			}
 			else if(!file_exists( $source_dir."/".$filename))
 			{
-				$feedbackprovider->log_error("BUILD ERROR", "Failed to move file ".$filename." as it does not exist inside ".$source_dir) ;
+				$this->feedbackprovider->log_error("BUILD ERROR", "Failed to move file ".$filename." as it does not exist inside ".$source_dir) ;
 				return false ;
 			}
-			else if( !move_uploaded_file( $source_dir."/".$filename, $dest_dir."/".$filename))
+			else if( !copy( $source_dir."/".$filename, $dest_dir."/".$filename))
+				//copying the files for now
+				//FIXME find a way to move the files
+			//else if( !move_uploaded_file( $source_dir."/".$filename, $dest_dir."/".$filename))
 			{
-				$feebackprovider->log_error( "BUILD ERROR", "Failed to move uploaded file ".$filename." from ".$source_dir." to ".$dest_dir) ;
+				$this->feedbackprovider->log_error( "BUILD ERROR", "Failed to move uploaded file ".$filename." from ".$source_dir." to ".$dest_dir) ;
 				return false ;
 			}
 		}
 		else
 		{
-			$feedbackprovider->log_error("BUILD ERROR", "Couldn't move files. Failed to create directory ".$dest_dir) ;
+			$this->feedbackprovider->log_error("BUILD ERROR", "Couldn't move files. Failed to create directory ".$dest_dir) ;
 			return false ;
 		}
 		return true ;
@@ -955,18 +757,26 @@ class project_builder
 
 	public function unzip_to( $zipfile, $dest)
 	{
+		$zip = new ZipArchive() ;
+
+		if( !( file_exists( $zipfile) && is_file( $zipfile)))
+		{
+			$this->feedbackprovider->log_error( "BUILDER ERROR", "Zip file ".$zipfile. " does not exist.") ;
+			return false ;
+		}
+
 		if( $zip->open( $zipfile))
 		{
 			if( !$zip->extractTo( $dest))
 			{
-				$feedbackprovider->log_error( "BUILD ERROR", "Failed to uzip tests ".$zipfile." to directory ".$dest) ;
+				$this->feedbackprovider->log_error( "BUILD ERROR", "Failed to uzip tests ".$zipfile." to directory ".$dest) ;
 				$zip-close() ;
 				return false ;
 			}
 			$zip->close() ;
 		}else
 		{
-			$feedbackprovider->log_error( "BUILD ERROR", "Failed to unzip tests to project. Couldn't open zip file ".$zipfile) ;
+			$this->feedbackprovider->log_error( "BUILD ERROR", "Failed to unzip tests to project. Couldn't open zip file ".$zipfile) ;
 			return false ;
 		}
 
@@ -981,8 +791,32 @@ class project_builder
 	//returns the absolute path to final project directory
 	public function get_project_dir()
 	{
-		return $this->serverroot."/".$this->finalprojectdir ;
+		return $this->finalprojectdir ;
 	}
+}
+
+/* @function rm - a rapper to delete tree that checks whether a file or directory exists  and that the argument is not an empty string before deleting it
+ * @param $dir_or_file - a string specifying path to file or directory
+ */
+function rm( $dir_or_file)
+{
+	//strip string of empty chars
+	if ( isset( $dir_or_file))
+	{
+		$dir_or_file = str_replace( ' ', '', $dir_or_file) ;
+		if( strlen( $dir_or_file) > 0)
+		{
+			if( file_exists( $dir_or_file))
+			{
+				return delTree( $dir_or_file) ;
+			}
+		}
+		else
+		{
+			error_log("Error! Attempting to delete unspecified directory.") ;
+		}
+	}
+	return true ;
 }
 
 /* @function create_dir
@@ -992,16 +826,10 @@ class project_builder
  */
 function create_dir( $pathtodir, $override=false)
 {
-	if( $override)
+	if( $override && rm( $pathtodir))
 	{
-		if( file_exists( $pathtodir))
-        	{
-                	//remove dir and its contents
-                	//TODO make sure $pathtodir is not an empty string as this will delete everything in webroot
-                	$this->delTree( $pathtodir) ;
-		}
                 //recreate the directory
-                return $this->create_dir( $pathtodir, $override) ;
+                return create_dir( $pathtodir, !$override) ;
         }
         else
 	{
@@ -1025,6 +853,7 @@ function delTree($dir)
         {
                 (is_dir("$dir/$file")) ? delTree("$dir/$file") : unlink("$dir/$file");
         }
-        return rmdir($dir);
+	return rmdir($dir);
+
 }
 ?>
