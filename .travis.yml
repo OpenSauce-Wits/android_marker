@@ -2,9 +2,14 @@ language: php
 before_install:
   - travis_retry composer self-update
   - composer install
+  - npm update
+install:
+- npm install
 script: 
 - phpunit --exclude-group FITS --bootstrap vendor/autoload.php tests
 - ./vendor/bin/phpunit --coverage-clover ./tests/logs/clover.xml
+- npm test
+- npm run coveralls
 
 after_script:
 - php vendor/bin/coveralls -v
