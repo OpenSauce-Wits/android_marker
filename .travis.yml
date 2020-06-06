@@ -12,6 +12,4 @@ script:
 - ./vendor/bin/phpunit --coverage-clover ./tests/logs/clover.xml
 
 after_script:
-- php vendor/bin/coveralls -v
-- php scripts/coveralls -v --exclude-no-stmt
 - sh -c 'if( [ "$TRAVIS_PHP_VERSION" != "hhvm" ] ); then php vendor/bin/coveralls -v; fi;'
