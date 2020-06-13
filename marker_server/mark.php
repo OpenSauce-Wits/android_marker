@@ -6,6 +6,7 @@
  */
 require_once("config.php"); // Include Global Configuration
 require_once("lib.php");    // Include Library Functions
+require_once( "feedback_lib.php") ;
 
 $inputJSON = file_get_contents('php://input');  // Get input from the client
 $task = json_decode($inputJSON, TRUE);        // Decode the JSON object
@@ -27,6 +28,15 @@ $timelimit = $task["timelimit"] ;
 $feedbackprovider = new feedback_provider() ;
 //init marker
 $marker = new marker( $feedbackprovider) ;
+
+//report that we've begun marking
+$result = array(
+        "result" => ONLINEJUDGE_STATUS_JUDGING,
+        "stdout" => "Marking student submission.",
+        "stderr" => "Judging submission."
+);
+
+echo json_encode( $result) ;
 
 //TODO marker object should be null if construction failed
 //TODO feedback provider object should be null if construction failed
@@ -54,6 +64,7 @@ if( $files_fetched)
 		$gradle_handler = new gradle_handler( $feedbackprovider) ;
 		if( $gradle_handler->run_gradle_task( "clean"))
 		{
+			$results_available = true ;
 			//run unit tests
 			if( $gradle_handler->run_gradle_task( "testDebugUnitTest"))
 			{
@@ -61,12 +72,53 @@ if( $files_fetched)
 			}
 			else
 			{
-				log_("Failed to run tests") ;
+				$results_available = false ;
+				log_( "DOME// Report failure to run tests.") ;
+			}
+
+			//run instrumented tests
+			$avd_manager = new avd_manager( $feedbackprovider) ;
+			//TODO avd_manager should be null if construction failed
+			if( $avd_manager->avd_online())
+			{
+				//run the instrumented tests( Installs and runs the tests for debug on connected devices)
+				if( $gradle_handler->run_gradle_task( "connectedDebugAndroidTest"))
+				{
+					log_("DOME// Report instrumented test results.") ;
+					//uninstall android apk
+					if( !$gradle_handler->run_gradle_task( "uninstallAll"))
+					{
+						$results_available = true ;
+						log_( "DOME// report to admin that we couldn't unsintall apk.") ;
+					}
+				}
+				else
+				{
+					log_("DOME// Report failure to run instrumentation tests.") ;
+				}
+			}
+			else
+			{
+				log_("DOME// Report avd not available") ;
+			}
+
+			if( $results_available && $feedbackprovider->set_test_results())
+			{
+				log_( "DOME//Report final results and grade to moodle.") ;
+			}
+			else
+			{
+				$result = array(
+				"result" => ONLINEJUDGE_STATUS_INTERNAL_ERROR,
+				"stdout" => "Marking student submission.",
+				"stderr" => "Judging submission."
+				);
+				echo json_encode( $result) ;
 			}
 		}
 		else
 		{
-			log_( "Something failed in the gradle handles.") ;
+			log_( "DOME// report failure to clean") ;
 		}
 	}
 	else
@@ -82,26 +134,4 @@ else
 }
 
 //returning result
-$result = array(
-        "result" => ONLINEJUDGE_STATUS_PENDING,
-        "stdout" => "0",
-        "stderr" => "0"
-);
-
-echo json_encode( $result) ;
-
-sleep( 30) ;
-
-$result = array(
-        "result" => ONLINEJUDGE_STATUS_ACCEPTED,
-        "stdout" => "0",
-        "stderr" => "0"
-) ;
-//returning result
-echo json_encode( $result) ;
-###PLAYING WITH MARKER FEEDBACK AND GRADING
-###CASE 1 : LANGUAGE NOT SET
-$outputs = array( "result" => ONLINEJUDGE_STATUS_INTERNAL_ERROR , "oj_feedback" => "MOCK RESULT : Marker error: Invalid Language") ;
-$return = array( "status" => ONLINEJUDGE_STATUS_INTERNAL_ERROR, "grade" => -1.0, "outputs" => array( $outputs)) ;
-echo json_encode( $return) ;
 ?>

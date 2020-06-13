@@ -37,7 +37,7 @@ settings::$source_structure = "/var/marker_data/marker_server/source_structure" 
 settings::$auth_token = array("witsoj_token" => "1e6947ac7fb3a9529a9726eb692c8cc5", "witsoj_name" => "marker.ms.wits.ac.za");
 settings::$project_dir = "/var/marker_data/marker_server/android_project" ;
 settings::$temp = "/var/marker_data/marker_server";
-settings::$getfiles_url= "http://192.168.17.128/get_files.php";
+settings::$getfiles_url= "http://192.168.137.75/get_files.php";
 
 //OJ return statuses
 define("ONLINEJUDGE_STATUS_PENDING", 0);

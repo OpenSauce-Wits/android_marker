@@ -6,6 +6,7 @@
  */
 // Include global configurations
 require_once("config.php");
+require_once( "feedback_lib.php") ;
 
 const output_max_length = 20000;
 const result_correct = ONLINEJUDGE_STATUS_ACCEPTED;        		///< Correct Submission
@@ -204,12 +205,6 @@ function move_source_files( $json_file_data)
 	}
 
 	return array( $success, $message) ;
-}
-
-function log_( $message)
-{
-	error_log( "##################MARKER_LOG[lib.php]#####################") ;
-	error_log( $message) ;
 }
 
 
@@ -509,9 +504,10 @@ class avd_manager
 			shell_exec( "cd $this->marker_tools && ./check_online_avd.sh") ;
 
 			$logs = file_get_contents( $this->avd_logs) ;
-			if( strpos( $this->avd_logs, "device" ) == false)
+			if( strpos( $logs, "device") === false)
 			{
 				$this->feedbackprovider->log_error( "AVD ERROR", "No avd is online.") ;
+				log_( "AVD CHECK::: ".$logs) ;
 				return false ;
 			}
 			return true ;
@@ -525,7 +521,7 @@ class avd_manager
 	{
 		shell_exec( "cd $this->marker_tools && ./list_avds.sh") ;
 		$data = file_get_contents( $this->avd_logs) ;
-		if( strpos( $this->avd_logs, $avdname) == false )
+		if( strpos( $this->avd_logs, $avdname))
 		{
 			$this->feedbackprovider->log_error( "AVD ERROR", "AVD $avdname not created.") ;
 			return false ;
@@ -549,31 +545,6 @@ class avd_manager
 		return false ;
 	}
 
-}
-class feedback_provider
-{
-	/*Class for storing feedback to be provided to moodle when running android things
-	 */
-	public $allfeedback = array(); //<an associative array containing all types of feedback to be provided
-	//will format feedback to send it to moodle
-	public function send_feedback_to_moodle()
-	{
-		return true ;
-	}
-	
-	public function log_error( $error_type, $error_message)
-	{
-		//TODO store in some way
-		log_( $error_type. "::::".$error_message) ;
-	}
-
-	/* @function get_test_results fetches unit tests and instrumented tests results
-	 * @return returns a json object of the form { FAILED : BOOL , UNIT : { test : status, ... }, INSTRUMENTED : { test : status, ...} }
-	 */
-	public function get_test_results()
-	{
-		return true ;
-	}
 }
 
 class project_builder
@@ -738,7 +709,7 @@ class project_builder
 				$this->feedbackprovider->log_error("BUILD ERROR", "Failed to move file ".$filename." as it does not exist inside ".$source_dir) ;
 				return false ;
 			}
-			else if( !copy( $source_dir."/".$filename, $dest_dir."/".$filename))
+			else if( !copy_r( $source_dir."/".$filename, $dest_dir."/".$filename))
 				//copying the files for now
 				//FIXME find a way to move the files
 			//else if( !move_uploaded_file( $source_dir."/".$filename, $dest_dir."/".$filename))
@@ -855,5 +826,16 @@ function delTree($dir)
         }
 	return rmdir($dir);
 
+}
+
+function copy_r( $source, $dest)
+{
+	$files = array_diff( scandir( $source), array( '.', '..')) ;
+	$success = true ;
+	foreach ( $files as $file)
+	{
+		$success = ( is_dir( "$source/$file")) ? copy_r( "$source/$file", "$dest/$file") : create_dir( $dest) && copy( "$source/$file", "$dest/$file") ;
+	}
+	return $success ;
 }
 ?>
