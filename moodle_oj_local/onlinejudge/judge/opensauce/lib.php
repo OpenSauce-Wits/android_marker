@@ -37,7 +37,7 @@ require_once(dirname(__FILE__) . "/../../../../config.php");
 require_once($CFG->dirroot . "/local/onlinejudge/judgelib.php");
 
 class judge_opensauce extends judge_base {
-    protected static $marker_url = "http://192.168.17.128/marker_server/";
+    protected static $marker_url = "http://192.168.137.75/marker_server/";
     protected static $marker_name = "opensauce";
 
     //TODO: update latest language list through ideone API

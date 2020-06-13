@@ -320,7 +320,7 @@ function onlinejudge_task_judged($event) {
         ON s.id = o.submission
         WHERE o.task = ?';
     if (!$submission = $DB->get_record_sql($sql, array($task->id))) {
-        return true;    // true means the event is pr   ocessed. false will cause retry
+        return true;    // true means the event is processed. false will cause retry
     }
 
     $cm = get_coursemodule_from_instance('assign', $submission->assignment, 0, false, MUST_EXIST);
