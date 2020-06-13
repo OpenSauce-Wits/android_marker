@@ -28,17 +28,27 @@ class feedback_provider
 		shell_exec( "cd ".settings::$marker_tools." && echo ".settings::$project_dir."| ./get_dirs_to_results.sh") ;
 		if( file_exists( settings::$marker_logs."/FEEDBACK.log"))
 		{
-			$paths = file_get_contents( settings::$marker_logs."/FEEDBACK.log") ;
-			//split string by emparands
-			$dirs = explode( "&", $paths) ;
-			$dirs[1] = substr($dirs[1], 0, -1) ;
-			
+			//file is in the format 
+			//link to unit test1
+			//link to unit test2
+			//...
+			//INSTRUMENTED_TESTS
+			//link to instrumented1
+			//...
+			//
+			$paths = file( settings::$marker_logs."/FEEDBACK.log", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ;
+
+			//split array by "INSTRUMENTED_TESTS"
+
+			$split_point = array_search( "INSTRUMENTED_TESTS", $paths, TRUE) ;
+			$split_point = $split_point === false ? 0 : $split_point ;
 			$success = true ;
 			
-			if( strlen( $dirs[0]) > 5 && file_exists( $dirs[0]))
+			if( $split_point > 0)
 			{
 				//set results for unit tests
-				$this->unit_tests = new unit_tests_results( $dirs[0]) ;
+				$this->unit_tests = new unit_tests_results( array_slice( $paths, 0, $split_point)) ;
+				$this->unit_tests->set_counts() ;
 			}
 			else
 			{
@@ -46,10 +56,11 @@ class feedback_provider
 				$this->log_error( "FEEDBACK ERROR", "No unit test results found.") ;
 			}
 
-			if( strlen( $dirs[1]) > 5 && file_exists( $dirs[1]))
+			if( sizeof( $paths) - $split_point > 1)
 			{
 				//set results for instrumented tests
-				$this->instrumented_tests = new instrumented_tests_results( $dirs[1]) ;
+				$this->instrumented_tests = new instrumented_tests_results( array_slice( $paths, $split_point+1, sizeof($paths)-$split_point-1)) ;
+				$this->instrumented_tests->set_counts() ;
 			}
 			else
 			{
@@ -63,6 +74,16 @@ class feedback_provider
 			$this->log_error("FEEDBACK ERROR", "File ".settings::$marker_logs."/FEEDBACK.log not found.") ;
 			return false ;
 		}
+	}
+
+	public function get_unit_tests()
+	{
+		return $this->unit_tests->get_results() ;
+	}
+
+	public function get_instrumented_tests()
+	{
+		return $this->instrumented_tests->get_results() ;
 	}
 }
 
@@ -108,18 +129,21 @@ class instrumented_tests_results extends test_results
 class test_results
 {
 	protected $html_data = null ;
-	public $num_tests = null ;
-	public $num_failures = null ;
-	public $num_ignored = null ;
+	public $num_tests = 0 ;
+	public $num_failures = 0 ;
+	public $num_ignored = 0 ;
 
-	function __construct( $path_to_html_file)
+	function __construct( $paths_to_html_file)
 	{
-		if( !file_exists( $path_to_html_file))
+		foreach ( $paths_to_html_file as $path_to_html_file)
 		{
-			error_log( $path_to_html_file." not found.") ;
-			die() ;
+			if( !file_exists( $path_to_html_file))
+			{
+				error_log( $path_to_html_file." not found.") ;
+				die() ;
+			}
 		}
-		$this->html_data = file_get_contents( $path_to_html_file) ;
+		$this->html_data = $paths_to_html_file ; 
 	}
 
 	/* @function set_counts - sets number of tests and number of failures and num ignored if specified
@@ -128,15 +152,19 @@ class test_results
 	 */
 	protected function set_counts( $set_ignored=false)
 	{
-		$clean_table = $this->get_table( $this->get_table( $this->html_data, true), true) ;
-		$DOM = new DOMDocument() ;
-		@$DOM->loadHTML( $clean_table) ;
+		foreach( $this->html_data as $html_data)
+		{
+			$html_data = file_get_contents( $html_data) ;
+			$clean_table = $this->get_table( $this->get_table( $html_data, true), true) ;
+			$DOM = new DOMDocument() ;
+			@$DOM->loadHTML( $clean_table) ;
 
-		$h = $DOM->getElementsByTagName( 'td') ;
-		$this->num_tests = $this->get_num( $h[0]->textContent );
-		$this->num_failures = $this->get_num( $h[1]->textContent) ;
-		if( $set_ignored)
-			$this->num_ignored = $this->get_num( $h[2]->textContent) ;
+			$h = $DOM->getElementsByTagName( 'td') ;
+			$this->num_tests += $this->get_num( $h[0]->textContent );
+			$this->num_failures += $this->get_num( $h[1]->textContent) ;
+			if( $set_ignored)
+				$this->num_ignored += $this->get_num( $h[2]->textContent) ;
+		}
 		return true ;
 	}
 
@@ -147,20 +175,25 @@ class test_results
 	protected function get_test_results($offset=0)
 	{
 		//get the inner-most html table
-		$results_table = $this->get_table( $this->get_table( $this->get_table( $this->html_data, true), true)) ;
-		//get all table rows as array
-		$DOM = new DOMDocument() ;
-		@$DOM->loadHTML( $results_table) ;
-		$rows = $DOM->getElementsByTagName( 'td') ;
-
 		$return_array = array() ;
 
-		for( $i = 0; $i < sizeof( $rows); $i = $i + 2 + $offset)
+		foreach( $this->html_data as $html_data)
 		{
-			$test_name = $rows[$i]->textContent ;
-			$test_result = $rows[$i+1+$offset]->textContent ;
+			$html_data = file_get_contents( $html_data) ;
+			$results_table = $this->get_table( $this->get_table( $this->get_table( $html_data, true), true)) ;
+			//get all table rows as array
+			$DOM = new DOMDocument() ;
+			@$DOM->loadHTML( $results_table) ;
+			$rows = $DOM->getElementsByTagName( 'td') ;
 
-			$return_array[$test_name] = $test_result ;
+			for( $i = 0; $i < sizeof( $rows); $i = $i + 2 + $offset)
+			{
+				$test_name = $rows[$i]->textContent ;
+				$test_result = $rows[$i+1+$offset]->textContent ;
+
+				$return_array[$test_name] = $test_result ;
+			}
+
 		}
 
 		return $return_array ;
@@ -198,4 +231,6 @@ function log_( $message)
 } 
 
 ?>
+
+
 

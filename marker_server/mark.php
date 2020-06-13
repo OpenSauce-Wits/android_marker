@@ -68,7 +68,7 @@ if( $files_fetched)
 			//run unit tests
 			if( $gradle_handler->run_gradle_task( "testDebugUnitTest"))
 			{
-				log_( "DOME// report tets results to moodle") ;
+				log_( "DOME// report test results to moodle") ;
 			}
 			else
 			{
@@ -104,6 +104,10 @@ if( $files_fetched)
 
 			if( $results_available && $feedbackprovider->set_test_results())
 			{
+				log_( json_encode( $feedbackprovider->get_unit_tests())) ;
+				log_( json_encode( $feedbackprovider->get_instrumented_tests())) ;
+				log_( "Num UT".$feedbackprovider->unit_tests->num_tests) ;
+				log_( "Num IT".$feedbackprovider->instrumented_tests->num_tests) ;
 				log_( "DOME//Report final results and grade to moodle.") ;
 			}
 			else
@@ -114,6 +118,7 @@ if( $files_fetched)
 				"stderr" => "Judging submission."
 				);
 				echo json_encode( $result) ;
+				log_("NOT all results were available.") ;
 			}
 		}
 		else

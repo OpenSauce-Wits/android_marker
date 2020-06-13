@@ -1,5 +1,11 @@
 <?php
 require_once( "lib.php") ;
 require_once( "config.php") ;
-copy_r( settings::$temp."/temp/java", settings::$temp."/temp/joke") ;
+require_once( "feedback_lib.php") ;
+
+$feedbackprovider = new feedback_provider() ;
+$feedbackprovider->set_test_results() ;
+
+
+
 ?>
