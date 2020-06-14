@@ -7,6 +7,7 @@
 // Include global configurations
 require_once("config.php");
 require_once( "feedback_lib.php") ;
+use \PHPUnit\Framework\TestCase ;
 
 const output_max_length = 20000;
 const result_correct = ONLINEJUDGE_STATUS_ACCEPTED;        		///< Correct Submission
@@ -16,6 +17,7 @@ const result_presentation_error = ONLINEJUDGE_STATUS_PRESENTATION_ERROR; ///< Pr
 const result_time_limit = ONLINEJUDGE_STATUS_TIME_LIMIT_EXCEED;       	///< Exceeded Time Limit
 const result_marker_error = ONLINEJUDGE_STATUS_INTERNAL_ERROR;	    	///< Marker Error
 const result_mixed = ONLINEJUDGE_STATUS_MULTI_STATUS;	    		///< Submission has been graded
+
 
 class marker
 {
@@ -146,6 +148,8 @@ class gradle_handler
 	private $feedbackprovider = null ;
 	private $gradle_logs = null ;
 
+	/** @codeCoverageIgnore
+	 */
 	public function __construct( $feedbackprovider)
 	{
 		$this->marker_tools = settings::$marker_tools ;
@@ -204,6 +208,7 @@ class gradle_handler
 	/* @function run_gradle_task runs the specified gradle task
 	 * @param $task a string specifying the gradle task to be run
 	 * @return true or false depending on whether the task failed or passed
+	 * @codeCoverageIgnore as dependent on system configuration
 	 */
 	public function run_gradle_task( $task)
 	{
@@ -254,6 +259,8 @@ class avd_manager
 	private $marker_logs = null ;
 	private $avds = null ; //< an associative arrays storing avd names and an array storing booleans on whether the avd is online and whether it is in use
 
+	/** @codeCoverageIgnore
+	 */
 	function __construct( $feedbackprovider)
 	{
 		$this->marker_tools = settings::$marker_tools ;
@@ -289,6 +296,7 @@ class avd_manager
 	/* @function create_avd creates an avd and adds it by name to the list of available avds
 	 * @param $avdname
 	 * @return true when on no error else false
+	 * @codeCoverageIgnore
 	 */
 	public function create_avd( $avdname = null)
 	{
@@ -307,6 +315,9 @@ class avd_manager
 		return false ;
 	}
 
+	/*
+	 * @codeCoverageIgnore
+	 */
 	public function avd_online()
 	{
 			//TODO check if any avds are online
@@ -325,6 +336,7 @@ class avd_manager
 	/* @function avd_avalaible checks if the specified avd has been created
 	 * @param $avdname
 	 * @return boolean
+	 * @codeCoverageIgnore
 	 */
 	public function avd_available( $avdname)
 	{
@@ -341,6 +353,7 @@ class avd_manager
 	/* @function start_avd powers on the specified avd
 	 * @param $avdname
 	 * @return boolean
+	 * @codeCoverageIgnore
 	 */
 	public function start_avd( $avdname)
 	{
@@ -377,6 +390,7 @@ class project_builder
 	 * which specifies the required structure of the student's submission
 	 * @param $source - string specifying the name of the student's source zip file
 	 * @param $feedbackprovider
+	 * @codeCoverageIgnore
 	 */
 	function __construct( $tests, $structurefile, $source, $feedbackprovider)
 	{
