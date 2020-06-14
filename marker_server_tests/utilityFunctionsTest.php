@@ -27,6 +27,7 @@ class utilityFunctionsTest extends Testcase
 
 	/* @depends testCanCreateADirectory
 	 * @depends testCanRemoveADirectory
+	 * @depends testCanRemoveAFile
 	 */
 	public function testCreateDirectoryAndOverrideExistingOne() : void
 	{
@@ -46,9 +47,24 @@ class utilityFunctionsTest extends Testcase
 		rm( $outer_dir) ;
 	}
 
+	public function testCanRemoveAFile() : void
+	{
+		$file = "myfile.f" ;
+		$resource = fopen( $file, 'wd') ;
+		fclose( $resource) ;
+
+		//check file exists
+		$this->assertTrue( file_exists( $file)) ;
+
+		//remove file
+		rm( $file) ;
+		//check file gone
+		$this->assertFalse( file_exists( $file)) ;
+	}
+
 	/* @depends testCanCreateADirectory
 	 * @depends testCanRemoveADirectory
-	 *
+	 * @depends testCanRemoveAFile
 	 */
 	public function testSuccessfullyCopiesFileIntoAFolder() : void
 	{

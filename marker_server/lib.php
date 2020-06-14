@@ -586,9 +586,13 @@ function rm( $dir_or_file)
 		$dir_or_file = str_replace( ' ', '', $dir_or_file) ;
 		if( strlen( $dir_or_file) > 0)
 		{
-			if( file_exists( $dir_or_file))
+			if( is_dir( $dir_or_file))
 			{
 				return delTree( $dir_or_file) ;
+			}
+			else
+			{
+				return unlink( $dir_or_file) ;
 			}
 		}
 		else
