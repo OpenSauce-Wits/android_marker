@@ -2,7 +2,7 @@
 <phpunit>
 	<filter>
 		<whitelist processUncoveredFilesFromWhitelist="true">
-			<directory suffix="lib.php">marker_server</directory>
+			<directory prefix="lib.php">marker_server</directory>
 		</whitelist>
 	</filter>
 </phpunit>
