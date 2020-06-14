@@ -26,19 +26,32 @@ class settings {
     public static $marker_data ;
     public static $marker_logs ;
 }
-
-settings::$marker_tools = "/var/marker_tools" ;
-settings::$marker_data = "/var/marker_data" ;
-settings::$marker_logs = "/var/marker_data/logs" ;
+//FIXME env dirs changed so as to accommodate online testing
+settings::$marker_tools = "marker_tools" ;
+settings::$marker_data = "tests/marker_data" ;
+settings::$marker_logs = "tests/marker_data/logs" ;
 settings::$keep_files = true;
-settings::$testcases = "/var/marker_data/marker_server/testcases";
-settings::$source = "/var/marker_data/marker_server/source" ;
-settings::$source_structure = "/var/marker_data/marker_server/source_structure" ;
+settings::$testcases = "tests/marker_data/marker_server/testcases";
+settings::$source = "tests/marker_data/marker_server/source" ;
+settings::$source_structure = "tests/marker_data/marker_server/source_structure" ;
 settings::$auth_token = array("witsoj_token" => "1e6947ac7fb3a9529a9726eb692c8cc5", "witsoj_name" => "marker.ms.wits.ac.za");
-settings::$project_dir = "/var/marker_data/marker_server/android_project" ;
-settings::$temp = "/var/marker_data/marker_server";
-settings::$getfiles_url= "http://192.168.137.75/get_files.php";
+settings::$project_dir = "tests/marker_data/marker_server/android_project" ;
+settings::$temp = "tests/marker_data/marker_server";
+settings::$getfiles_url= "get_files.php";
 
+
+#settings::$marker_tools = "/var/marker_tools" ;
+#settings::$marker_data = "/var/marker_data" ;
+#settings::$marker_logs = "/var/marker_data/logs" ;
+#settings::$keep_files = true;
+#settings::$testcases = "/var/marker_data/marker_server/testcases";
+#settings::$source = "/var/marker_data/marker_server/source" ;
+#settings::$source_structure = "/var/marker_data/marker_server/source_structure" ;
+#settings::$auth_token = array("witsoj_token" => "1e6947ac7fb3a9529a9726eb692c8cc5", "witsoj_name" => "marker.ms.wits.ac.za");
+#settings::$project_dir = "/var/marker_data/marker_server/android_project" ;
+#settings::$temp = "/var/marker_data/marker_server";
+#settings::$getfiles_url= "http://192.168.137.75/get_files.php";
+#
 //OJ return statuses
 define("ONLINEJUDGE_STATUS_PENDING", 0);
 define("ONLINEJUDGE_STATUS_ACCEPTED", 1);
