@@ -29,6 +29,16 @@ class feedbackProviderTest extends TestCase
 		$this->assertTrue( self::$itr->set_counts()) ;
 	}
 
+	public function testGetResultsFromUnitTests() : void
+	{
+		$this->assertArrayHasKey( "divide", self::$utr->get_results()) ;
+	}
+
+	public function testGetResultsFromInstrumentedTests() : void
+	{
+		$this->assertArrayHasKey( "testButtonExists", self::$itr->get_results()) ;
+	}
+
 	public static function tearDownAfterClass() : void
 	{
 		self::$fbp = null ;
