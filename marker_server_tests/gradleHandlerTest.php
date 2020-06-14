@@ -32,9 +32,32 @@ class gradleHandlerTest extends TestCase
 	 */
 	public function testGetTaskResultPassOnLogfileFound( \gradle_handler $gh) : void
 	{
-		$res = fopen( $gh->marker_logs."/GRADLE.log", 'wd') ;
+		$file = $gh->marker_logs."/GRADLE.log";
+		$res = fopen( $file, 'wd') ;
 		fclose( $res) ;
 		$this->assertTrue( $gh->get_task_results()) ;
+		rm( $file) ;
+	}
+
+	/** @depends testSetGradleHandler
+	 */
+	public function testTaskPassedWhenLogFileHasNothing( \gradle_handler $gh) : void
+	{
+		$this->assertTrue( $gh->gradle_task_passed()) ;
+	}
+
+	/** @depends testSetGradleHandler
+	 */
+	public function testTaskFailedWhenFailureFoundInLogFile( \gradle_handler $gh) : void
+	{
+		$file = $gh->marker_logs."/GRADLE.log" ;
+		fopen( $file, 'wd') ;
+		$this->assertFileExists( $file) ;
+
+		file_put_contents( $file, "Somehting womgiitn FAILURE somthing else.") ;
+		$this->assertTrue( $gh->get_task_results()) ;
+		$this->assertFalse( $gh->gradle_task_passed()) ;
+		rm( $file) ;
 	}
 }
 
