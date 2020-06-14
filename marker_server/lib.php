@@ -26,6 +26,8 @@ class marker
 	public $getfiles_url = null ; ///< client files host
 	public $project_builder = null ;
 
+	/** @codeCoverageIgnore constructurs return no values so we dont unit test them.
+	 */
 	function __construct( $feedbackprovider)
 	{
 		$this->rootdir = settings::$temp ;
