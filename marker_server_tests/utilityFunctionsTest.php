@@ -17,7 +17,7 @@ class utilityFunctionsTest extends Testcase
 		$this->assertDirectoryExists( self::$folder) ;
 	}
 
-	/* @depends testCanCreateADirectory
+	/** @depends testCanCreateADirectory
 	 */
 	public function testCanRemoveADirectory(): void
 	{
@@ -25,7 +25,7 @@ class utilityFunctionsTest extends Testcase
 		$this->assertFalse( is_dir( self::$folder)) ;
 	}
 
-	/* @depends testCanCreateADirectory
+	/** @depends testCanCreateADirectory
 	 * @depends testCanRemoveADirectory
 	 * @depends testCanRemoveAFile
 	 */
@@ -62,7 +62,7 @@ class utilityFunctionsTest extends Testcase
 		$this->assertFalse( file_exists( $file)) ;
 	}
 
-	/* @depends testCanCreateADirectory
+	/** @depends testCanCreateADirectory
 	 * @depends testCanRemoveADirectory
 	 * @depends testCanRemoveAFile
 	 */

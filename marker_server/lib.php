@@ -142,7 +142,7 @@ class gradle_handler
 {
 	private $marker_tools = null ;
 	private $marker_data = null ;
-	private $marker_logs = null ;
+	public $marker_logs = null ;
 	private $feedbackprovider = null ;
 	private $gradle_logs = null ;
 
