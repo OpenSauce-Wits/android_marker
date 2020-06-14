@@ -1,22 +1,22 @@
-Description :
+### Description :
 This version of the onlinejudge can mark android project and return a grade from 0% to 100%
 Requirements :
 - LAMP server
 - Full moodle installation.
 - OpenSauce onlinejudge plugin
 
-Setup :
+### Setup :
 - Copy the folder onlinejudge/ from moodle_oj_local to <PATH_TO_MOODLE_INSTALLATION>/local/
 - Copy the folder onlinejudge/ from moodle_oj_mod_... to <PATH_TO_MOODLE_INSTALLATION>/mod/assign/feedback/
 
-Use :
+### Usage :
 Assignment creation :
 - Admin/Teacher creates an assignment
 - Selects onlinejudge under feedback types
 - Choose ' JavaZip( OpenSauce)' under language options
 - Change other settings and click 'save and display'
 
-Judging :
+### Judging :
 - Start the judge daemon by running '<PATH_TO_MOODLE_INSTALLATION>/local/onlinejudge/cli/run_judged'
 - Go to 'test case management' inside the assignment view as the admin/teacher
 - The testcases are in the form of files :
@@ -29,7 +29,7 @@ Judging :
 - Login as a student or switch role to student and make a submission. Wait for a few seconds and refresh page.
 - You overall grade should be displayed along with any additional info.
 
-Coming soon :
+#### Coming soon :
 - html view of testcases.
 ### Build Status
 [![Build Status](https://travis-ci.org/OpenSauce-Wits/android_marker.svg?branch=master)](https://travis-ci.org/OpenSauce-Wits/android_marker)
