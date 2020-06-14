@@ -1,0 +1,18 @@
+{
+    "1": {
+        "name": "JavaZip",
+        "extension": "zip",
+	"compile" :{
+            "unzip": "unzip ~sourcefile~",
+	    "movesource":"mv src/* .",
+            "compile": "javac -encoding UTF-8 *.java"
+	},
+	"compile_tests" : {
+	    "compile" : "./Program.class"
+	},
+        "commands": {
+            "run": "java -Djava.security.manager Program"
+        }
+    }
+}
+

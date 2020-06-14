@@ -1,0 +1,205 @@
+-download gradle
+https://downloads.gradle-dn.com/distributions/gradle-6.2.2-bin.zip
+
+- system should have openjdk-8-jdk openjdk-8-jdk-headless
+
+##Gradle Android Project
+
+include ':app' >> settings.gradle
+
+- define where to download our gradle libraries from
+
+buildscript {
+
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:<Plugin-version(3.6.0 latest as of 13/03/20 )>'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete '<project-name/build>'
+    delete 'build'
+}
+
+>> build.gradle
+
+-use android gradle plugin
+
+mkdir app
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    defaultConfig {
+        applicationId "com.example.karl.myapplication"
+        minSdkVersion 16
+        targetSdkVersion 25
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'com.android.support:appcompat-v7:25.3.1'
+}
+
+
+>> app/build.gradle
+
+-create app/src/main/res/values/styles.xml which will be used to setup app's main theme
+
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+    </style>
+
+</resources>
+
+>> app/src/main/res/values/styles.xml
+
+- create app/src/main/AndroidManifest.xml to define package, label and main activity of the app.
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="<java.project.package.name>">
+
+    <application
+        android:label="Demo App"
+        android:theme="@style/AppTheme">
+
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+
+>> app/src/main/AndroidManifest.xml
+
+-use this for sdk tools
+
+https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+
+- add this to bashrc and source profile for env setup
+
+- build using ./gradlew in android_project root directory
+app/build/outputs/**  ##here lay the generated apk
+
+- at some point gradle would refuse to change build files like Android Manifest : CUASE - file system had been corrupted.
+
+#NB dashed names are not valid java class or package names
+
+TODO run generated apk on android device
+Research difference between apk variants
+
+my current server IP 192.168.26.128
+- adb devices - lists available android devices
+- adb install <dir/to/apk> - install the apk and returns 'Success'
+- adb uninstall <package.name.of.app> - uninstalls the apk and returns 'Success'
+- adb shell pm list packages -lists all installed packages/android apps
+
+Installing/Uninstalling debug variant of app with gradle
+- ./gradlew installDebug
+- ./gradlew uninstallDebug
+
+- debug version of app installs but the release version needs signing.
+
+Adding main to android app
+
+package <name.of.app.package>
+
+import android.app.Activity ;
+import android.os.Bundle ;
+
+public class MainActivity extends Activity
+{
+	@Override
+	public void onCreate( Bundle savedInstanceState)
+	{
+		super.onCreate( savedInstanceState) ;
+		setContentView( R.layout.activity_main) ;
+	}
+}
+
+>> app/src/main/java/package/name/of/app/MainActivty.java
+
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</android.support.constraint.ConstraintLayout>
+
+>> app/src/main/res/layout/activity_main.xml
+
+TODO - checkout monkey command on adb
+
+
+AVD Creation
+
+- sdkmanager --install "system-images;android-28;google_apis;x86_64" to install the system image for the emulator
+- avdmanager create avd -n <NameOfAVD> -k <directory;to;system;image>
+
+#android
+export ANDROID_HOME=/home/tizzar/AndroidCLI/android-sdk-linux
+export PATH=$ANDROID_HOME/tools:$PATH
+export PATH=$ANDROID_HOME/tools/bin:$PATH
+export PATH=$ANDROID_HOME/platform-tools:$PATH
+
+#android sdk root
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+export PATH=$ANDROID_SDK_ROOT:$PATH
+
+#gradle
+export GRADLE_HOME=/home/tizzar/AndroidCLI/gradle/gradle-6.2.2
+export PATH=$GRADDLE_HOME/bin:$PATH
+
+#virtual device/emulator
+export ANDROID_AVD_HOME=/root/.android/avd
+
+- load emulator
+ emulator @<emulatorName> -no-window -no-audio #resolve no qt library error by launching this command in ANDROID_HOME/tools
+
+- error:device offline
+ adb kill-server
+ adb start-server #kills bridge without having to restart emulator
+
+#To show full stacktrace when tests fail
+>> tasks.withType( Test) {
+	exceptionFormat = 'full'
+}
