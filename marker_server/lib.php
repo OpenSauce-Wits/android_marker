@@ -48,10 +48,10 @@ class marker
 		}
 	}
 
-	/* @function get_client_files - downloads the specified files from the client side
+	/** @codeCoverageIgnore as it fetches files remotely by IP
+	 * @\function get_client_files - downloads the specified files from the client side
 	 * @param $files - associative array of keys $filename => array( "filename" , [$source , $dest])
 	 * @return false if we fail to get any of the files else true
-	 * @codeCoverageIgnore as it fetches files remotely by IP
 	 */
 	public function get_client_files( $files)
 	{
@@ -208,10 +208,10 @@ class gradle_handler
 		return true ;
 	}
 
-	/* @function run_gradle_task runs the specified gradle task
+	/** @codeCoverageIgnore as dependent on system configuration
+	 * @\function run_gradle_task runs the specified gradle task
 	 * @param $task a string specifying the gradle task to be run
 	 * @return true or false depending on whether the task failed or passed
-	 * @codeCoverageIgnore as dependent on system configuration
 	 */
 	public function run_gradle_task( $task)
 	{
@@ -223,7 +223,7 @@ class gradle_handler
 		}
 
 		shell_exec( "cd ".settings::$marker_tools." && echo $task | ./run_gradle_task.sh") ;
-	//FIXME might need to wait for the gradle task to finish execution	
+	        //FIXME might need to wait for the gradle task to finish execution	
 		if( $this->get_task_results())
 		{
 			if( !$this->gradle_task_passed())
@@ -296,10 +296,10 @@ class avd_manager
 		}
 	}
 
-	/* @function create_avd creates an avd and adds it by name to the list of available avds
+	/** @codeCoverageIgnore
+	 * @function create_avd creates an avd and adds it by name to the list of available avds
 	 * @param $avdname
 	 * @return true when on no error else false
-	 * @codeCoverageIgnore
 	 */
 	public function create_avd( $avdname = null)
 	{
@@ -318,8 +318,7 @@ class avd_manager
 		return false ;
 	}
 
-	/*
-	 * @codeCoverageIgnore
+	/** @codeCoverageIgnore
 	 */
 	public function avd_online()
 	{
@@ -336,10 +335,10 @@ class avd_manager
 			return true ;
 	}
 
-	/* @function avd_avalaible checks if the specified avd has been created
+	/**@codeCoverageIgnore
+	 * @function avd_avalaible checks if the specified avd has been created
 	 * @param $avdname
 	 * @return boolean
-	 * @codeCoverageIgnore
 	 */
 	public function avd_available( $avdname)
 	{
@@ -353,10 +352,10 @@ class avd_manager
 		return true ;
 	}
 
-	/* @function start_avd powers on the specified avd
+	/** @codeCoverageIgnore
+	 * @function start_avd powers on the specified avd
 	 * @param $avdname
 	 * @return boolean
-	 * @codeCoverageIgnore
 	 */
 	public function start_avd( $avdname)
 	{
@@ -387,13 +386,12 @@ class project_builder
 	private $finalprojectdir = null ;
 
 	private $alldirsavailable = TRUE ;
-	/*Constructor
+	/** @codeCoverageIgnore
 	 * @param $tests - string specifying the name of tests zip file in the server
 	 * @param $structurefile - string specifying the name of lecture's json file( in the server)
 	 * which specifies the required structure of the student's submission
 	 * @param $source - string specifying the name of the student's source zip file
 	 * @param $feedbackprovider
-	 * @codeCoverageIgnore
 	 */
 	function __construct( $tests, $structurefile, $source, $feedbackprovider)
 	{
