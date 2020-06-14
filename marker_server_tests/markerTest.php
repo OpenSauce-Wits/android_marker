@@ -1,7 +1,7 @@
 <?php
 use \PHPUnit\Framework\TestCase ;
 require_once( "lib.php") ;
-reuire_once( "feedback_lib.php") ;
+require_once( "feedback_lib.php") ;
 
 class markerTest extends TestCase
 {
