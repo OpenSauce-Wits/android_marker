@@ -19,6 +19,15 @@ class utilityFunctionsTest extends Testcase
 
 	/* @depends testCreateDir
 	 */
+	public function testRemoveDir(): void
+	{
+		rm( self::$folder) ;
+		$this->assertFalse( is_dir( self::$folder)) ;
+	}
+
+	/* @depends testCreateDir
+	 * @depends testRemoveDir
+	 */
 	public function testCreateDirOverride() : void
 	{
 		$new_dir = "path/to" ;
@@ -26,17 +35,39 @@ class utilityFunctionsTest extends Testcase
 		create_dir( $new_dir, true) ;
 		$this->assertDirectoryExists( $new_dir) ;
 
-		//check the override passed by ensure inner /folder does not exist
+		//check the override passed by ensuring inner /folder does not exist
 		$this->assertFalse( is_dir( self::$folder)) ;
+
+		rm( $new_dir) ;
 	}
 
-	/* @depends testCreateDir
+	/* @/depends testCreateDir
+	 * @/depends testRemoveDir
 	 */
-	public function testRemoveDir(): void
+	/*
+	public function testCopyRecursivelyAFile() : void
 	{
-		rm( self::$folder) ;
-		$this->assertFalse( is_dir( self::$folder)) ;
+		//create source file
+		$filename = "myfile.txt" ;
+		$dest = "dest" ;
+
+		$fp = fopen( $filename, 'wb') ;
+		fclose( $fp) ;
+
+		//create destination copy directory
+		create_dir( $dest) ;
+
+		//copy files
+		copy_r( $filename, $dest) ;
+
+		//check if it copied the file
+		$this->assertTrue( file_exists( "$dest/$filename")) ;
+
+		rm( $filename) ;
+		rm( $dest) ;
+
 	}
+	*/
 
 	public static function tearDownAfterClass() : void
 	{

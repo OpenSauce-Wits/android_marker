@@ -636,15 +636,68 @@ function delTree($dir)
 	return rmdir($dir);
 
 }
-
-function copy_r( $source, $dest)
+/*
+function copy_r( $source, $dest, $source_dir=null)
 {
+	if( !is_dir( $source) && !isset( $source_dir))/
+	{
+		return create_dir( $dest) && copy( $source, "$dest/$source") ;
+	}
+	else if( isset( $source_dir))
+	{
+		if( create_dir( "$dest/$source_dir"))
+		{
+			//recursively copy all files inside source
+			$files = array_diff( scandir( $source), array( '.', '..')) ;
+			foreach( $files as $file)
+			{
+				if( !copy_r( "$source/$file",  "$dest/$source"))
+				{
+					return false ;
+				}
+			}
+			return true ;
+		}
+		else
+		{
+			return false ;
+		}
+
+	}
+	if( is_dir( $source) && isset( $source_dir))
+	{
+		//create a corresponding folder inside $dest
+		if( create_dir( $dest))
+		{
+			//recursively copy all files inside source
+			$files = array_diff( scandir( $source), array( '.', '..')) ;
+			foreach( $files as $file)
+			{
+				if( !copy_r( "$source/$file",  "$dest/$source"))
+				{
+					return false ;
+				}
+			}
+			return true ;
+		}
+		else
+		{
+			return false ;
+		}
+	}else
+	{
+		//remember that copy uses named destination to copy files
+		return create_dir( $dest) && copy( $source, "$dest/$source") ;
+	}
+	/*
 	$files = array_diff( scandir( $source), array( '.', '..')) ;
 	$success = true ;
 	foreach ( $files as $file)
 	{
+		if( is_dir( "$source/$file")
 		$success = ( is_dir( "$source/$file")) ? copy_r( "$source/$file", "$dest/$file") : create_dir( $dest) && copy( "$source/$file", "$dest/$file") ;
 	}
 	return $success ;
-}
+	*/
+//}
 ?>
