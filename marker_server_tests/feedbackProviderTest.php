@@ -20,6 +20,15 @@ class feedbackProviderTest extends TestCase
 		$this->assertTrue( self::$fbp->send_feedback_to_moodle()) ;
 	}
 
+	public function testSetCountsForUnitTests() : void
+	{
+		$this->assertTrue( self::$utr->set_counts()) ;
+	}
+	public function testSetCountsForInstrumentedTests() : void
+	{
+		$this->assertTrue( self::$itr->set_counts()) ;
+	}
+
 	public static function tearDownAfterClass() : void
 	{
 		self::$fbp = null ;

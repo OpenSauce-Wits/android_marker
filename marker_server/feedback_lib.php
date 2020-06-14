@@ -95,7 +95,7 @@ class unit_tests_results extends test_results
 	}
 	function set_counts( $flag=true)
 	{
-		parent::set_counts( true) ;
+		return parent::set_counts( true) ;
 	}
 
 	function get_results()
@@ -112,7 +112,7 @@ class instrumented_tests_results extends test_results
 	}
 	function set_counts($flag=false)
 	{
-		parent::set_counts( false) ;
+		return parent::set_counts( false) ;
 	}
 
 	function get_results()
