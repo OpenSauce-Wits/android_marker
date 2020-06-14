@@ -2,7 +2,8 @@
 use \PHPUnit\Framework\TestCase ;
 require_once( "config.php") ;
 
-/* @codeCoverageIgnore
+/**
+ * @codeCoverageIgnore
  */
 class feedback_provider
 {
