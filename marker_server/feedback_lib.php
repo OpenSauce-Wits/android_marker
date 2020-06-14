@@ -1,6 +1,9 @@
 <?php
+use \PHPUnit\Framework\TestCase ;
 require_once( "config.php") ;
 
+/* @codeCoverageIgnore
+ */
 class feedback_provider
 {
 	public $unit_tests = null ;
