@@ -11,41 +11,46 @@ class utilityFunctionsTest extends Testcase
 		self::$folder = "path/to/folder" ;
 	}
 
-	public function testCreateDir(): void
+	public function testCanCreateADirectory(): void
 	{
 		create_dir( self::$folder) ;
 		$this->assertDirectoryExists( self::$folder) ;
 	}
 
-	/* @depends testCreateDir
+	/* @depends testCanCreateADirectory
 	 */
-	public function testRemoveDir(): void
+	public function testCanRemoveADirectory(): void
 	{
 		rm( self::$folder) ;
 		$this->assertFalse( is_dir( self::$folder)) ;
 	}
 
-	/* @depends testCreateDir
-	 * @depends testRemoveDir
+	/* @depends testCanCreateADirectory
+	 * @depends testCanRemoveADirectory
 	 */
-	public function testCreateDirOverride() : void
+	public function testCreateDirectoryAndOverrideExistingOne() : void
 	{
-		$new_dir = "path/to" ;
+		$outer_dir = "path/to" ;
+		$inner_dir = "path/to/inner" ;
+
+		create_dir( $inner_dir) ;
+		$this->assertDirectoryExists( $inner_dir) ;
+
 		//we override the previous directory $folder
-		create_dir( $new_dir, true) ;
-		$this->assertDirectoryExists( $new_dir) ;
+		create_dir( $outer_dir, true) ;
+		$this->assertDirectoryExists( $outer_dir) ;
 
-		//check the override passed by ensuring inner /folder does not exist
-		$this->assertFalse( is_dir( self::$folder)) ;
+		//check the override passed by ensuring inner folder does not exist
+		$this->assertFalse( is_dir( $inner_dir)) ;
 
-		rm( $new_dir) ;
+		rm( $outer_dir) ;
 	}
 
-	/* @/depends testCreateDir
-	 * @/depends testRemoveDir
+	/* @depends testCanCreateADirectory
+	 * @depends testCanRemoveADirectory
+	 *
 	 */
-	/*
-	public function testCopyRecursivelyAFile() : void
+	public function testSuccessfullyCopiesFileIntoAFolder() : void
 	{
 		//create source file
 		$filename = "myfile.txt" ;
@@ -65,9 +70,7 @@ class utilityFunctionsTest extends Testcase
 
 		rm( $filename) ;
 		rm( $dest) ;
-
 	}
-	*/
 
 	public static function tearDownAfterClass() : void
 	{
