@@ -1,0 +1,10 @@
+{
+	"autoload": {
+		"classmap": [
+			"marker_server/"
+		]
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^8"
+	}
+}
