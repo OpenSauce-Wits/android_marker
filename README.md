@@ -31,3 +31,7 @@ Judging :
 
 Coming soon :
 - html view of testcases.
+### Build Status
+[![Build Status](https://travis-ci.org/OpenSauce-Wits/android_marker.svg?branch=master)](https://travis-ci.org/OpenSauce-Wits/android_marker)
+### Code coverage
+[![Coverage Status](https://coveralls.io/repos/github/OpenSauce-Wits/android_marker/badge.svg?branch=master)](https://coveralls.io/github/OpenSauce-Wits/android_marker?branch=master)
