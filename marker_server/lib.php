@@ -51,6 +51,7 @@ class marker
 	/* @function get_client_files - downloads the specified files from the client side
 	 * @param $files - associative array of keys $filename => array( "filename" , [$source , $dest])
 	 * @return false if we fail to get any of the files else true
+	 * @codeCoverageIgnore as it fetches files remotely by IP
 	 */
 	public function get_client_files( $files)
 	{
