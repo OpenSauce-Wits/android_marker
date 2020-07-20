@@ -20,7 +20,7 @@ androidProject=""
 clear_files () {
   for file in $(ls)
   do
-    if [ "$file" != "RequiredDocuments.txt" ] && [ "$file" != "LecturerZip.zip" ] && [ "$file" != "StudentZip.zip" ] && [ "$file" != "MarkProject.sh" ] && [ "$file" != "SetupOfAndroidEmulator.txt" ];
+    if [ "$file" != "RequiredDocuments.txt" ] && [ "$file" != "runTestOnEmulator.sh" ] && [ "$file" != "LecturerZip.zip" ] && [ "$file" != "StudentZip.zip" ] && [ "$file" != "MarkProject.sh" ] && [ "$file" != "SetupOfAndroidEmulator.txt" ];
     then
       rm -rf "$file"
     fi
@@ -31,7 +31,7 @@ clear_files () {
 open_project () {
   for file in $(ls)
   do
-    if [ "$file" != "RequiredDocuments.txt" ] && [ "$file" != "PrepareTemplate.sh" ] && [ "$file" != "LecturerZip.zip" ] && [ "$file" != "StudentZip.zip" ] && [ "$file" != "MarkProject.sh" ] && [ "$file" != "SetupOfAndroidEmulator.txt" ];
+    if [ "$file" != "RequiredDocuments.txt" ] && [ "$file" != "runTestOnEmulator.sh" ] && [ "$file" != "PrepareTemplate.sh" ] && [ "$file" != "LecturerZip.zip" ] && [ "$file" != "StudentZip.zip" ] && [ "$file" != "MarkProject.sh" ] && [ "$file" != "SetupOfAndroidEmulator.txt" ];
     then
     	androidProject="$file"
       cd "$file"
@@ -112,12 +112,69 @@ rm -rf StudentCode
 echo "Marking Project"
 
 open_project
+cd "$(dirname "$(find -name *\\gradlew)")"
 chmod +x gradlew
-./gradlew cAT
+
+# This code searches for availabel emulators that are running and stores them in
+# a list
+count=0
+numDevices=0
+deviceName=""
+AvailableDevices=()
+for device in $(adb devices)
+do
+ count=$(($count + 1))
+ # Each device listed has its device name and device state
+ # This if condition checks for device state
+ if [ $(($count%2)) == 0 ];
+ then
+  numDevices=$(($numDevices + 1))
+  # The first 4 values in the list are from the sentence "List of devices attached"
+  if [ $(( numDevices > 2 )) ];
+  then
+   # Checks if the emulator is available
+   if [ "$device" == "device" ];
+   then
+    # If it is available it adds it to the list of available devices
+    AvailableDevices[${#AvailableDevices[@]}]="$deviceName"
+   fi
+  fi
+ else
+  # else condition checks for device name
+  deviceName=$device
+ fi
+done
+# the first two are from the string "List of devices attached"
+numDevices=$(( $numDevices - 2))
+
+# numDevices is the number of shards we have
+# looping through the list will give us the shard id for each emulator
+# The command to run the shards needs specific values that can only be obtained
+# in sequence. 
+# So i will obtain a string of the commands first
+count=0
+ParallelCommands=()
+for device in ${AvailableDevices[@]}
+do
+ # Now without the & at the end of the command, the marking would not be done in parallel. The shards only split the tests
+ ParallelCommands[${#ParallelCommands[@]}]="$device $numDevices $count"
+ count=$(($count + 1)) 
+done
+
+for comm in "${ParallelCommands[@]}"
+do
+ cd "$rootDir"
+ bash runTestOnEmulator.sh $comm &
+done
+
+# The wait makes sure that the computer doesn't carry on with this script before all the tasks are complete
+wait
+# The --profile will make an html file that tells you how long each build took
+#./gradlew cAT --console=plain
 
 #Copies Report to the root
-cp -r app/build/reports $rootDir
-cd $rootDir
-rm -rf $androidProject
+#cp -r app/build/reports "$rootDir"
+#cd "$rootDir"
+rm -rf "$androidProject"
 echo "Report Generated"
 # basename "$filename" : strips away the previous directories
