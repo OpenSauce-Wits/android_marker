@@ -51,7 +51,8 @@ file_exists($locallib_file) AND require_once $locallib_file;
 require_once($CFG->dirroot . '/mod/assign/feedbackplugin.php');
 require_once(dirname(__FILE__) . '/lib.php');
 require_once('testcase_form.php');
-
+########**********THABOR**********########
+require_once( $CFG->dirroot.'/mod/assign/feedback/onlinejudge/oj_gradelib.php') ; #*
 /**
  * Extends the assign feedback plugin class
  *
@@ -296,7 +297,7 @@ class assign_feedback_onlinejudge extends assign_feedback_plugin {
             $url = new moodle_url('/mod/assign/feedback/onlinejudge/testcase.php', $urlparams);
             $output .= "<a href='$url' class='btn btn-primary' type='button'>" . get_string('testcasemanagement', 'assignfeedback_onlinejudge') . "</a> ";
             $url = new moodle_url('/mod/assign/feedback/onlinejudge/rejudge.php', array('id' => $cmid, 'a' => $this->assignment->get_instance()->id));
-            $output .= "<a href='$url' class='btn btn-info' type='button'>" . get_string('rejudgeall', 'assignfeedback_onlinejudge') . "</a>";
+	    $output .= "<a href='$url' class='btn btn-info' type='button'>" . get_string('rejudgeall', 'assignfeedback_onlinejudge') . "</a>";
         }
         $output .= '</div>';
         return $output;
@@ -365,7 +366,8 @@ class assign_feedback_onlinejudge extends assign_feedback_plugin {
         $table->size = array('30%', '80%');
         $submission = $this->assignment->get_user_submission($grade->userid, false);
         $onlinejudge_result = get_onlinejudge_result($submission, $this->assignment->get_instance()->grade);
-        // Status
+	
+	// Status
         $item_name = get_string('status', 'assignfeedback_onlinejudge') . $OUTPUT->help_icon('status', 'assignfeedback_onlinejudge');
         $item = get_string('notavailable');
         if (isset($onlinejudge_result->status)) {
@@ -393,15 +395,15 @@ class assign_feedback_onlinejudge extends assign_feedback_plugin {
         ///////////////////////////////////////////
 
         // Source code
-        $urlparams = array('id' => $this->assignment->get_course_module()->id, 'a' => $this->assignment->get_instance()->id, 'submissionid' => $submission->id,);
-        $url = new moodle_url('/mod/assign/feedback/onlinejudge/source.php', $urlparams);
-        $attributes = array('src' => $url);
-        $item = html_writer::tag('iframe', $attributes);
-        $external_link_icon = '<br><i class="fa fa-external-link" aria-hidden="true"></i>';
-        $external_link_attributes = array('href' => $url , 'target' => '_blank', 'title' => get_string('more'));
-        $item .= html_writer::tag('a', $external_link_icon, $external_link_attributes);
-        $item_name = get_string('source_code', 'assignfeedback_onlinejudge');
-        $table->data[] = array($item_name, $item);
+        //$urlparams = array('id' => $this->assignment->get_course_module()->id, 'a' => $this->assignment->get_instance()->id, 'submissionid' => $submission->id,);
+        //$url = new moodle_url('/mod/assign/feedback/onlinejudge/source.php', $urlparams);
+        //$attributes = array('src' => $url);
+        //$item = html_writer::tag('iframe', $attributes);
+        //$external_link_icon = '<br><i class="fa fa-external-link" aria-hidden="true"></i>';
+        //$external_link_attributes = array('href' => $url , 'target' => '_blank', 'title' => get_string('more'));
+        //$item .= html_writer::tag('a', $external_link_icon, $external_link_attributes);
+        //$item_name = get_string('source_code', 'assignfeedback_onlinejudge');
+        //$table->data[] = array($item_name, $item);
         ///////////////////////////////////////////
 
         // Details
@@ -411,8 +413,12 @@ class assign_feedback_onlinejudge extends assign_feedback_plugin {
             $item = htmlspecialchars(reset($onlinejudge_result->testcases)->compileroutput);
         } else if (!empty($onlinejudge_result->testcases)) {
             $i = 1;
-            $lines = array();
-            foreach ($onlinejudge_result->testcases as $case) {
+	    $lines = array();
+	    //#########*********THABOR added**********#########
+	    $lines[] = get_oj_feedback( $grade->userid, $this->assignment->get_instance()->id ) ;
+	  //the following used to add return statuses of testcases to the onlinejudge details section  
+	/*
+	    foreach ($onlinejudge_result->testcases as $case) {
                 if (!is_null($case)) {
                     $line = get_string('case', 'assignfeedback_onlinejudge', $i) . ' ' . get_string('status' . $case->status, 'local_onlinejudge');
 
@@ -432,11 +438,13 @@ class assign_feedback_onlinejudge extends assign_feedback_plugin {
                     $lines[] = $line;
                 }
                 $i++;
-            }
+	    }
+	    */
             if (!empty($lines)) {
                 $item = implode($lines, '<hr>');
             }
-        }
+	}
+	
         $item = format_text($item, FORMAT_MOODLE, array('allowid' => true)); // popup details links require id
         $table->data[] = array($item_name, $item);
         ///////////////////////////////////////////
