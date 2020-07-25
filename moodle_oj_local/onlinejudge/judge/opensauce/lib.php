@@ -111,7 +111,9 @@ class judge_opensauce extends judge_base {
 		"source" => $source,
 		"input" => "$input",
 		"output" => "$output",
-		"timelimit" => "$task->cpulimit");
+		"timelimit" => "$task->cpulimit"
+	);
+
 	$data_string = json_encode($data);
 
         $options = array(
