@@ -162,7 +162,7 @@ for device in ${AvailableDevices[@]}
 do
  # Now without the & at the end of the command, the marking would not be done in parallel. The shards only split the tests
  ParallelCommands[${#ParallelCommands[@]}]="$device $numDevices $count"
- count=$(($count + 1)) 
+ count=$(($count + 1))
 done
 
 for comm in "${ParallelCommands[@]}"
@@ -173,12 +173,7 @@ done
 
 # The wait makes sure that the computer doesn't carry on with this script before all the tasks are complete
 wait
-# The --profile will make an html file that tells you how long each build took
-#./gradlew cAT --console=plain
 
-#Copies Report to the root
-#cp -r app/build/reports "$rootDir"
-#cd "$rootDir"
 rm -rf "$androidProject"
 echo "Report Generated"
 # basename "$filename" : strips away the previous directories
