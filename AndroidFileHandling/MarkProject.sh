@@ -114,6 +114,10 @@ echo "Marking Project"
 open_project
 cd "$(dirname "$(find -name *\\gradlew)")"
 chmod +x gradlew
+./gradlew assembleDebugAndroidTest
+
+# Check that searches for ready emulators
+./gradlew installDebug
 
 # This code searches for availabel emulators that are running and stores them in
 # a list
