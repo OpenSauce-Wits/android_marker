@@ -116,7 +116,7 @@ cd "$(dirname "$(find -name *\\gradlew)")"
 chmod +x gradlew
 ./gradlew assembleDebugAndroidTest
 
-chmod -R +xrw $ANDROID_SDK_ROOT
+#chmod -R +xrw $ANDROID_SDK_ROOT
 # Check that searches for ready emulators
 ./gradlew installDebug
 
